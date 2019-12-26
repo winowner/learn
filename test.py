@@ -23,7 +23,7 @@ highQuery = browser.find_element_by_id('simpleQuery')
 highQuery.click()
 
 alarmType = browser.find_element_by_id('alarmType')
-alarmType
+# alarmType
 # attribute = browser.find_element_by_id("kw").get_attribute('type')
 # print(attribute)
 
