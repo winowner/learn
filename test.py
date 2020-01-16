@@ -32,3 +32,4 @@ alarmType = browser.find_element_by_id('alarmType')
 # ActionChains(browser).move_to_element(above).perform()
 
 # browser.quit()
+
