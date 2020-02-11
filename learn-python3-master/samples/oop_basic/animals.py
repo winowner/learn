@@ -30,4 +30,7 @@ print('d is Dog?', isinstance(d, Dog))
 print('d is Cat?', isinstance(d, Cat))
 
 run_twice(c)
+<<<<<<< HEAD
 str(123)
+=======
+>>>>>>> 1b5da070f37b3b89e5284eca3d43aa8f4297b1fe

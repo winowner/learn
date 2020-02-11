@@ -30,3 +30,16 @@ Month = Enum('Month', ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', '
 
 for name, member in Month.__members__.items():
     print(name, '=>', member, ',', member.value)
+<<<<<<< HEAD
+=======
+
+class color(Enum):
+    red=1
+    oringe=2
+    yellow=3
+    green=4
+    green1=1
+
+for name,value in color:
+    print("%s : %s" %(name,value))
+>>>>>>> 1b5da070f37b3b89e5284eca3d43aa8f4297b1fe
