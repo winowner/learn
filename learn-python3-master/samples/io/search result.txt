@@ -1,0 +1,19 @@
+
+Key word is: do
+
+F:\pyse_workspace\learn-python3-master\samples\io\do_bytesio.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir_l.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir_ll.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_stringio.py
+
+Key word is: read
+
+
+Key word is: do_
+
+F:\pyse_workspace\learn-python3-master\samples\io\do_bytesio.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir_find.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_dir_l.py
+F:\pyse_workspace\learn-python3-master\samples\io\do_stringio.py

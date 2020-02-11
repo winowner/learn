@@ -13,5 +13,6 @@ if __name__=='__main__':
     p = Process(target=run_proc, args=('test',))
     print('Child process will start.')
     p.start()
+    print('------------')
     p.join()
     print('Child process end.')
