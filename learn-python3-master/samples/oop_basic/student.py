@@ -27,3 +27,10 @@ bart.print_score()
 
 print('grade of Bart:', bart.get_grade())
 print('grade of Lisa:', lisa.get_grade())
+
+bart = Student('Bart Simpson', 59)
+lisa = Student('Lisa Simpson', 87)
+bart.age = 8
+print(bart.age)
+
+print(lisa.age)
