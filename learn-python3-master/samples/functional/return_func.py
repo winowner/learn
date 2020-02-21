@@ -44,3 +44,9 @@ f1, f2, f3 = count()
 print(f1())
 print(f2())
 print(f3())
+<<<<<<< HEAD
+
+a=isinstance(f1)
+print(a)
+=======
+>>>>>>> 1b5da070f37b3b89e5284eca3d43aa8f4297b1fe

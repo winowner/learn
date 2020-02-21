@@ -4,8 +4,18 @@
 from datetime import datetime
 import os
 
+<<<<<<< HEAD
 #pwd = os.path.abspath('F:/pojieStudy/')
 pwd = 'F:/pojieStudy'
+=======
+<<<<<<< HEAD
+pwd = os.path.abspath('.')
+
+=======
+# pwd = os.path.abspath('.')
+pwd = 'D:\soft'
+>>>>>>> 1b5da070f37b3b89e5284eca3d43aa8f4297b1fe
+>>>>>>> 4d449b724f947211711bfce191a9098bf958b796
 print('      Size     Last Modified  Name')
 print('------------------------------------------------------------')
 

@@ -31,5 +31,9 @@ alarmType = browser.find_element_by_id('alarmType')
 # above = browser.find_element(By.PARTIAL_LINK_TEXT, '设置')
 # ActionChains(browser).move_to_element(above).perform()
 
+<<<<<<< HEAD
+# browser.quit()
+=======
 # browser.quit()
 
+>>>>>>> 1b5da070f37b3b89e5284eca3d43aa8f4297b1fe
