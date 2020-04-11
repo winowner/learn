@@ -156,6 +156,6 @@ class  Engine:
         with  S:
             S.execute(query,values)
 
-e=Engine('192.168.1.200','root','Admin@Root123','test')
+e=Engine('127.0.0.1','root','root','clc')
 for  i in range(10):
     e.save(Login(i,'admin'+str(i),20+i))
