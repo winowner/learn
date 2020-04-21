@@ -75,7 +75,7 @@ async def cookie2user(cookie_str):
         return None
 
 @get('/')
-def index(*, page='1'):
+async def index(*, page='1'):
     page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
     page = Page(num)
@@ -90,7 +90,7 @@ def index(*, page='1'):
     }
 
 @get('/blog/{id}')
-def get_blog(id):
+async def get_blog(id):
     blog = await Blog.find(id)
     comments = await Comment.findAll('blog_id=?', [id], orderBy='created_at desc')
     for c in comments:
@@ -115,7 +115,7 @@ def signin():
     }
 
 @post('/api/authenticate')
-def authenticate(*, email, passwd):
+async def authenticate(*, email, passwd):
     if not email:
         raise APIValueError('email', 'Invalid email.')
     if not passwd:
@@ -189,7 +189,7 @@ def manage_users(*, page='1'):
     }
 
 @get('/api/comments')
-def api_comments(*, page='1'):
+async def api_comments(*, page='1'):
     page_index = get_page_index(page)
     num = await Comment.findNumber('count(id)')
     p = Page(num, page_index)
@@ -199,7 +199,7 @@ def api_comments(*, page='1'):
     return dict(page=p, comments=comments)
 
 @post('/api/blogs/{id}/comments')
-def api_create_comment(id, request, *, content):
+async def api_create_comment(id, request, *, content):
     user = request.__user__
     if user is None:
         raise APIPermissionError('Please signin first.')
@@ -213,7 +213,7 @@ def api_create_comment(id, request, *, content):
     return comment
 
 @post('/api/comments/{id}/delete')
-def api_delete_comments(id, request):
+async def api_delete_comments(id, request):
     check_admin(request)
     c = await Comment.find(id)
     if c is None:
@@ -222,7 +222,7 @@ def api_delete_comments(id, request):
     return dict(id=id)
 
 @get('/api/users')
-def api_get_users(*, page='1'):
+async def api_get_users(*, page='1'):
     page_index = get_page_index(page)
     num = await User.findNumber('count(id)')
     p = Page(num, page_index)
@@ -237,7 +237,7 @@ _RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$'
 _RE_SHA1 = re.compile(r'^[0-9a-f]{40}$')
 
 @post('/api/users')
-def api_register_user(*, email, name, passwd):
+async def api_register_user(*, email, name, passwd):
     if not name or not name.strip():
         raise APIValueError('name')
     if not email or not _RE_EMAIL.match(email):
@@ -260,7 +260,7 @@ def api_register_user(*, email, name, passwd):
     return r
 
 @get('/api/blogs')
-def api_blogs(*, page='1'):
+async def api_blogs(*, page='1'):
     page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
     p = Page(num, page_index)
@@ -270,12 +270,12 @@ def api_blogs(*, page='1'):
     return dict(page=p, blogs=blogs)
 
 @get('/api/blogs/{id}')
-def api_get_blog(*, id):
+async def api_get_blog(*, id):
     blog = await Blog.find(id)
     return blog
 
 @post('/api/blogs')
-def api_create_blog(request, *, name, summary, content):
+async def api_create_blog(request, *, name, summary, content):
     check_admin(request)
     if not name or not name.strip():
         raise APIValueError('name', 'name cannot be empty.')
@@ -288,7 +288,7 @@ def api_create_blog(request, *, name, summary, content):
     return blog
 
 @post('/api/blogs/{id}')
-def api_update_blog(id, request, *, name, summary, content):
+async def api_update_blog(id, request, *, name, summary, content):
     check_admin(request)
     blog = await Blog.find(id)
     if not name or not name.strip():
@@ -304,7 +304,7 @@ def api_update_blog(id, request, *, name, summary, content):
     return blog
 
 @post('/api/blogs/{id}/delete')
-def api_delete_blog(request, *, id):
+async def api_delete_blog(request, *, id):
     check_admin(request)
     blog = await Blog.find(id)
     await blog.remove()

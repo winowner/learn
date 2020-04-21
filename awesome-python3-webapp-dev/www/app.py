@@ -15,7 +15,7 @@ from datetime import datetime
 from aiohttp import web
 from jinja2 import Environment, FileSystemLoader
 
-from config import configs
+from configs import configs
 
 import orm
 from coroweb import add_routes, add_static
@@ -104,8 +104,8 @@ async def response_factory(app, handler):
                 resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
                 resp.content_type = 'text/html;charset=utf-8'
                 return resp
-        if isinstance(r, int) and t >= 100 and t < 600:
-            return web.Response(t)
+        if isinstance(r, int) and r >= 100 and r < 600:
+            return web.Response(r)
         if isinstance(r, tuple) and len(r) == 2:
             t, m = r
             if isinstance(t, int) and t >= 100 and t < 600:
@@ -131,14 +131,19 @@ def datetime_filter(t):
 
 async def init(loop_name):
     await orm.create_pool(loop=loop_name, **configs.db)
-    app = web.Application(loop=loop_name, middlewares=[
-        logger_factory, auth_factory, response_factory
-    ])
+    app = web.Application(loop=loop_name, middlewares=[logger_factory, auth_factory, response_factory])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
     add_static(app)
-    srv = await loop_name.create_server(app.make_handler(), '127.0.0.1', 9000)
-    logging.info('server started at http://127.0.0.1:9000...')
+    # srv = await loop_name.create_server(app.make_handler(), 'localhost', 9000)
+    # logging.info('server started at http://127.0.0.1:9000...')
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    srv = web.TCPSite(runner, 'localhost', 9000)
+    await srv.start()
+    print('服务器启动成功！')
+
     return srv
 
 loop = asyncio.get_event_loop()
