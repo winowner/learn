@@ -11,16 +11,15 @@ def log(sql, args=()):
     logging.info('SQL:%s' % sql)
 
 
-@asyncio.coroutine
-def create_pool(loop, **kw):  # 这里的**kw是一个dict
+async def create_pool(loop, **kw):  # 这里的**kw是一个dict
     logging.info(' start creating database connection pool')
     global __pool
-    # 理解这里的yield from 是很重要的
+    # 理解这里的await 是很重要的
     # dict有一个get方法，如果dict中有对应的value值，则返回对应于key的value值，否则返回默认值，例如下面的host，如果dict里面没有
     # 'host',则返回后面的默认值，也就是'localhost'
     # 这里有一个关于Pool的连接，讲了一些Pool的知识点，挺不错的，点击打开链接，下面这些参数都会讲到，以及destroy__pool里面的
     # wait_closed()
-    __pool = yield from aiomysql.create_pool(
+    __pool = await aiomysql.create_pool(
         host=kw.get('host', 'localhost'),
         port=kw.get('port', 3306),
         user=kw['user'],
@@ -34,31 +33,29 @@ def create_pool(loop, **kw):  # 这里的**kw是一个dict
     )
 
 
-@asyncio.coroutine
-def destroy_pool():
+async def destroy_pool():
     global __pool
     if __pool is not None:
-        __pool.close()  # 关闭进程池,The method is not a coroutine,就是说close()不是一个协程，所有不用yield from
-        yield from __pool.wait_closed()  # 但是wait_close()是一个协程，所以要用yield from,到底哪些函数是协程，上面Pool的链接中都有
+        __pool.close()  # 关闭进程池,The method is not a coroutine,就是说close()不是一个协程，所有不用await
+        await __pool.wait_closed()  # 但是wait_close()是一个协程，所以要用await,到底哪些函数是协程，上面Pool的链接中都有
 
 
 # 我很好奇为啥不用commit 事务不用提交么？我觉得是因为上面再创建进程池的时候，有一个参数autocommit=kw.get('autocommit',True)
 # 意思是默认会自动提交事务
-@asyncio.coroutine
-def select(sql, args, size=None):
+async def select(sql, args, size=None):
     log(sql, args)
     global __pool
     # 666 建立游标
-    # -*- yield from 将会调用一个子协程，并直接返回调用的结果
-    # yield from从连接池中返回一个连接， 这个地方已经创建了进程池并和进程池连接了，进程池的创建被封装到了create_pool(loop, **kw)
-    with (yield from __pool) as conn:  # 使用该语句的前提是已经创建了进程池，因为这句话是在函数定义里面，所以可以这样用
-        cur = yield from conn.cursor(aiomysql.DictCursor)  # A cursor which returns results as a dictionary.
-        yield from cur.execute(sql.replace('?', '%s'), args)
+    # -*- await 将会调用一个子协程，并直接返回调用的结果
+    # await从连接池中返回一个连接， 这个地方已经创建了进程池并和进程池连接了，进程池的创建被封装到了create_pool(loop, **kw)
+    with (await __pool) as conn:  # 使用该语句的前提是已经创建了进程池，因为这句话是在函数定义里面，所以可以这样用
+        cur = await conn.cursor(aiomysql.DictCursor)  # A cursor which returns results as a dictionary.
+        await cur.execute(sql.replace('?', '%s'), args)
         if size:
-            rs = yield from cur.fetchmany(size)  # 一次性返回size条查询结果，结果是一个list，里面是tuple
+            rs = await cur.fetchmany(size)  # 一次性返回size条查询结果，结果是一个list，里面是tuple
         else:
-            rs = yield from cur.fetchall()  # 一次性返回所有的查询结果
-        yield from cur.close()  # 关闭游标，不用手动关闭conn，因为是在with语句里面，会自动关闭，因为是select，所以不需要提交事务(commit)
+            rs = await cur.fetchall()  # 一次性返回所有的查询结果
+        await cur.close()  # 关闭游标，不用手动关闭conn，因为是在with语句里面，会自动关闭，因为是select，所以不需要提交事务(commit)
         logging.info('rows have returned %s' % len(rs))
     return rs  # 返回查询结果，元素是tuple的list
 
@@ -68,19 +65,18 @@ def select(sql, args, size=None):
 # 返回操作影响的行号
 # 我想说的是 知道影响行号有个叼用
 
-@asyncio.coroutine
-def execute(sql, args, autocommit=True):
+async def execute(sql, args, autocommit=True):
     log(sql)
     global __pool
-    with (yield from __pool) as conn:
+    with (await __pool) as conn:
         try:
             # 因为execute类型sql操作返回结果只有行号，不需要dict
-            cur = yield from conn.cursor()
+            cur = await conn.cursor()
             # 顺便说一下 后面的args 别掉了 掉了是无论如何都插入不了数据的
-            yield from cur.execute(sql.replace('?', '%s'), args)
-            yield from conn.commit()  # 这里为什么还要手动提交数据
+            await cur.execute(sql.replace('?', '%s'), args)
+            await conn.commit()  # 这里为什么还要手动提交数据
             affected_line = cur.rowcount
-            yield from cur.close()
+            await cur.close()
             print('execute : ', affected_line)
         except BaseException as e:
             raise
@@ -249,8 +245,7 @@ class Model(dict, metaclass=ModelMetaclass):
 
     @classmethod
     # 类方法有类变量cls传入，从而可以用cls做一些相关的处理。并且有子类继承时，调用该类方法时，传入的类变量cls是子类，而非父类。
-    @asyncio.coroutine
-    def find_all(cls, where=None, args=None, **kw):
+    async def find_all(cls, where=None, args=None, **kw):
         sql = [cls.__select__]
         if where:
             sql.append('where')
@@ -275,38 +270,35 @@ class Model(dict, metaclass=ModelMetaclass):
             else:
                 raise ValueError('Invalid limit value : %s ' % str(limit))
 
-        rs = yield from select(' '.join(sql), args)  # 返回的rs是一个元素是tuple的list
+        rs = await select(' '.join(sql), args)  # 返回的rs是一个元素是tuple的list
         return [cls(**r) for r in rs]  # **r 是关键字参数，构成了一个cls类的列表，其实就是每一条记录对应的类实例
 
     @classmethod
-    @asyncio.coroutine
-    def findNumber(cls, selectField, where=None, args=None):
+    async def findNumber(cls, selectField, where=None, args=None):
         '''find number by select and where.'''
         sql = ['select %s __num__ from `%s`' % (selectField, cls.__table__)]
         if where:
             sql.append('where')
             sql.append(where)
-        rs = yield from select(' '.join(sql), args, 1)
+        rs = await select(' '.join(sql), args, 1)
         if len(rs) == 0:
             return None
         return rs[0]['__num__']
 
     @classmethod
-    @asyncio.coroutine
-    def find(cls, primarykey):
+    async def find(cls, primarykey):
         '''find object by primary key'''
         # rs是一个list，里面是一个dict
-        rs = yield from select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [primarykey], 1)
+        rs = await select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [primarykey], 1)
         if len(rs) == 0:
             return None
         return cls(**rs[0])  # 返回一条记录，以dict的形式返回，因为cls的夫类继承了dict类
 
     @classmethod
-    @asyncio.coroutine
-    def findAll(cls, **kw):
+    async def findAll(cls, **kw):
         rs = []
         if len(kw) == 0:
-            rs = yield from select(cls.__select__, None)
+            rs = await select(cls.__select__, None)
         else:
             args = []
             values = []
@@ -314,32 +306,29 @@ class Model(dict, metaclass=ModelMetaclass):
                 args.append('%s=?' % k)
                 values.append(v)
             print('%s where %s ' % (cls.__select__, ' and '.join(args)), values)
-            rs = yield from select('%s where %s ' % (cls.__select__, ' and '.join(args)), values)
+            rs = await select('%s where %s ' % (cls.__select__, ' and '.join(args)), values)
         return rs
 
-    @asyncio.coroutine
-    def save(self):
+    async def save(self):
         args = list(map(self.getValueOrDefault, self.__fields__))
         print('save:%s' % args)
         args.append(self.getValueOrDefault(self.__primary_key__))
-        rows = yield from execute(self.__insert__, args)
+        rows = await execute(self.__insert__, args)
         if rows != 1:
             print(self.__insert__)
             logging.warning('failed to insert record: affected rows: %s' % rows)
 
-    @asyncio.coroutine
-    # 显示方言错误是什么鬼。。。
+    async # 显示方言错误是什么鬼。。。
     def update(self):  # 修改数据库中已经存入的数据
         args = list(map(self.getValue, self.__fields__))  # 获得的value是User2实例的属性值，也就是传入的name，email，password值
         args.append(self.getValue(self.__primary_key__))
-        rows = yield from execute(self.__update__, args)
+        rows = await execute(self.__update__, args)
         if rows != 1:
             logging.warning('failed to update record: affected rows: %s' % rows)
 
-    @asyncio.coroutine
-    def delete(self):
+    async def delete(self):
         args = [self.getValue(self.__primary_key__)]
-        rows = yield from execute(self.__delete__, args)
+        rows = await execute(self.__delete__, args)
         if rows != 1:
             logging.warning('failed to delete by primary key: affected rows: %s' % rows)
 
@@ -357,22 +346,21 @@ if __name__ == "__main__":  # 一个类自带前后都有双下划线的方法�
 
 
     # 创建实例
-    @asyncio.coroutine
-    def test():
-        yield from create_pool(loop=loop, host='localhost', port=3306, user='root', password='Limin123?', db='test')
+    async def test():
+        await create_pool(loop=loop, host='localhost', port=3306, user='root', password='Limin123?', db='test')
         # user = User2(id=2, name='Tom', email='slysly759@gmail.com', password='12345')
-        r = yield from User2.findAll()
+        r = await User2.findAll()
         print(r)
-        # yield from user.save()
+        # await user.save()
         # ield from user.update()
-        # yield from user.delete()
-        # r = yield from User2.find(8)
+        # await user.delete()
+        # r = await User2.find(8)
         # print(r)
-        # r = yield from User2.findAll()
+        # r = await User2.findAll()
         # print(1, r)
-        # r = yield from User2.findAll(name='sly')
+        # r = await User2.findAll(name='sly')
         # print(2, r)
-        yield from destroy_pool()  # 关闭pool
+        await destroy_pool()  # 关闭pool
 
 
     loop.run_until_complete(test())

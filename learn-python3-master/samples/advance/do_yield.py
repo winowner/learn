@@ -7,7 +7,7 @@ def each_ascii(s):
     return '%s chars' % len(s)
 
 def yield_from(s):
-    r = yield from each_ascii(s)
+    r = await each_ascii(s)
     print(r)
 
 def main():
@@ -20,8 +20,8 @@ def main():
     except StopIteration as s:
         print(s.value) # => '3 chars'
 
-    # using yield from in main() will change main() from function to generator:
-    # r = yield from each_ascii('hello')
+    # using await in main() will change main() from function to generator:
+    # r = await each_ascii('hello')
 
     for ch in yield_from('hello'):
         pass
