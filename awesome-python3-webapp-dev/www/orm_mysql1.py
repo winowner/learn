@@ -1,4 +1,5 @@
 import  pymysql
+
 class  Field:
     def __init__(self,name,column=None,pk=False,unique=False,index=False,nullable=True,default=None):
         self.name=name  # 字段名称
@@ -28,6 +29,7 @@ class  Field:
     def  __str__(self):
         return   "{} <{}>".format(self.__class__.__name__,self.name)  # 此处返回被调用的类名和实例名称
     __repr__=__str__
+
 # 定义整数类型的类型属性
 class  IntField(Field):  #多了自增属性。
     def  __init__(self,name=None,column=None,pk=False,unique=False,index=False,nullable=True,default=None,auto_increment=True):
@@ -137,6 +139,7 @@ class  Login(Model):
     def __str__(self):
         return   "Loin({},{},{})".format(self.id,self.name,self.age)
     __repr__=__str__
+
 class  Engine:
     def __init__(self,*args,**kwargs):
         self.conn=pymysql.connections.Connection(*args,**kwargs)
