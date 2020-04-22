@@ -21,6 +21,7 @@ def get(path):
             return func(*args, **kw)
         wrapper.__method__ = 'GET'
         wrapper.__route__ = path
+        wrapper.__clc__ = 'clc'
         return wrapper
     return decorator
 
