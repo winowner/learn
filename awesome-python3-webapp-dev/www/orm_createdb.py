@@ -1,10 +1,11 @@
 #_coding:utf-8_
 author = "toby"
 
+import time
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean, Float
 from sqlalchemy.orm import sessionmaker
 
 engine = create_engine("mysql+pymysql://root:root@127.0.0.1/clc", encoding="utf-8", echo=True)
@@ -13,13 +14,22 @@ Base = declarative_base() #生成ORM基类
 
 #定义一个类Host，一个表对应一个类，且这个类和表做了映射关系
 class Host(Base):
-    __tablename__ = "hostinfo" #表名
+    __tablename__ = "hostinfo1" #表名
     id = Column(Integer, primary_key=True) #字段
     hostname = Column(String(32)) #字段
     ip = Column(String(64)) #字段
 
-print(Base.metadata)
-# Base.metadata.create_all(engine) #创建表结构
+class Use(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    email = Column(String(64))
+    passwd = Column(String(64))
+    admin = Column(Boolean)
+    name = Column(String(64))
+    image = Column(String(600))
+    created_at = Column(Float, default=time.time)
+
+Base.metadata.create_all(engine) #创建表结构
 
 # Session_class = sessionmaker(bind=engine) # 创建与数据库的会话session class ,注意,这里返回给session的是个class,不是实例
 # Session = Session_class() # 生成session实例

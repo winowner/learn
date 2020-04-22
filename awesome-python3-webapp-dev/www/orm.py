@@ -146,6 +146,8 @@ class ModelMetaclass(type):
         attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
         attrs['__update__'] = 'update `%s` set %s where `%s`=?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
         attrs['__delete__'] = 'delete from `%s` where `%s`=?' % (tableName, primaryKey)
+        attrs['__create__'] = ''
+        attrs['__drop__'] = 'DROP TABLE  `%s`' % (tableName)
         return type.__new__(cls, name, bases, attrs)
 
 
@@ -242,3 +244,12 @@ class Model(dict, metaclass=ModelMetaclass):
         rows = await execute(self.__delete__, args)
         if rows != 1:
             logging.warning('failed to remove by primary key: affected rows: %s' % rows)
+
+    async def create(self):
+        pass
+
+    async def drop(self):
+        args = [self.getValue(self.__table__)]
+        rows = await execute(self.__drop__, args)
+        if rows != 1:
+            logging.warning('failed to drop table: %s' % rows)
