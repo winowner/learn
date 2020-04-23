@@ -318,8 +318,7 @@ class Model(dict, metaclass=ModelMetaclass):
             print(self.__insert__)
             logging.warning('failed to insert record: affected rows: %s' % rows)
 
-    async # 显示方言错误是什么鬼。。。
-    def update(self):  # 修改数据库中已经存入的数据
+    async def update(self):  # 修改数据库中已经存入的数据
         args = list(map(self.getValue, self.__fields__))  # 获得的value是User2实例的属性值，也就是传入的name，email，password值
         args.append(self.getValue(self.__primary_key__))
         rows = await execute(self.__update__, args)
