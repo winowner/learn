@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<script src="./zhuxian.txt"></script>
+	<script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.15&key=2407d029be7a00660d1ab0ad8946eb70&plugin=AMap.MouseTool,AMap.PolyEditor"></script>
+	<style type="text/css">
+		body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+		#allmap {width: 100%; height:800px; overflow: hidden;}
+		#result {width: 100%;font-size:12px;}
+		dl,dt,dd,ul,li{
+			margin:0;
+			padding:0;
+			list-style:none;
+		}
+		p{font-size:12px;}
+		dt{
+			font-size:14px;
+			font-family:"微软雅黑";
+			font-weight:bold;
+			border-bottom:1px dotted #000;
+			padding:5px 0 5px 5px;
+			margin:5px 0;
+		}
+		dd{
+			padding:5px 0 0 5px;
+		}
+		li{
+			line-height:28px;
+		}
+		
+		.jd-select {
+		position: relative;
+		}
+		.jd-select-cont {
+			display: none;
+			position: absolute;
+			left: 0;
+			top: 33px;
+			width: 170px;
+			height: 280px;
+			background: #FFFFFF;
+			border: 1px solid #E1E1E1;
+			.search-input{
+			width: 170px;
+			height: 28px;
+			line-height: 28px;
+			border: 1px solid #eee; 
+			}
+			ul {
+				width: 100%;
+				height: 210px;
+				overflow: overlay;
+				li {
+					display: block !important;
+					width: 100% !important;
+					height: 30px;
+					.type-name {
+						display: block;
+						width: 70%;
+						height: 30px;
+						line-height: 30px;
+					}
+				}
+			}
+			.btn-cont {
+				width: 100%;
+				height: 30px;
+				padding: 10px 20px;
+				.sure-btn {
+					width: 50px;
+					height: 20px;
+					line-height: 20px;
+					float: left;
+					background: #4990E2;
+					color: #fff;
+					font-size: 12px;
+					text-align: center;
+					border-radius: 4px;
+				}
+				.cancel-btn {
+					width: 50px;
+					height: 20px;
+					line-height: 20px;
+					float: left;
+					border-radius: 4px;
+					border: 1px solid #4990E2;
+					color: #4990E2;
+					text-align: center;
+					margin-left: 27px;
+				}
+			}
+		}
+	</style>
+	<title>CLC的小喵屋</title>
+</head>
+<body>
+	<div id="allmap" style="overflow:hidden;zoom:1;position:relative;">	
+		<div id="map1" style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;">
+       </div>
+	</div>
+	<div id="result">
+		<input type="text" value="113.490431,23.093875,113.4926,23.093924" id="gps"/>
+		<input type="text" value="baidu" id="gpsType"/>
+		<input type="button"  value="转成高德经纬度" onclick="convertGps()"/>
+        <input type="button"  value="获取高德经纬度" onclick="getGps()"/>
+		<input type="text" value="113.49799165327521" id="jd"/>
+		<input type="text" value="23.09961780973866" id="wd"/>
+		<input type="button"  value="添加点" onclick="addMarker()">
+		<input type="text" value="113.49799165327521,23.09961780973866" id="gpsGroup"/>
+		<input type="button"  value="添加多个点" onclick="addOverlayGroup()">
+		<input type="button"  value="显示桩号" onclick="zhuxian();"/>
+		<input type="button"  value="显示主线" onclick="showPolyline(gsPolyline);"/>
+		<input type="button"  value="清除所有覆盖物" onclick="clearAll()"/></br>
+		<input type="button"  value="获取顶点" onclick="getPoint()"/>
+        <input type="button"  value="开启编辑" onclick="Editing('enable')"/>
+        <input type="button"  value="关闭编辑" onclick="Editing('disable')"/>
+        <input type="button" name='func' value="画多边形" onclick="draw('polygon')" />
+        <!-- <input type="button" name='func' value="画矩形" onclick="draw('rectangle')" /> -->
+		<!-- <input type="button" name='func' value="画圆" onclick="draw('circle')" /> -->
+        <input type="button" name='func' value="画线" onclick="draw('polyline')" /> 
+        <!-- <input type="button" name='func' value="画点" onclick="draw('marker')" /> -->
+		<input type="button" name='func' value="测距" onclick="draw('rule')"/>
+		<!-- <input type="button" name='func' value="测面积" onclick="draw('measureArea')"/> -->
+		<input type="button" name='func' value="关闭工具" onclick="mouseTool.close()"/>
+		
+		<div style="width:170px;position:relative;">
+			<div class="jd-select form-control" style="width:170px;"></div>
+			<div class="jd-select-cont">
+				<input type="text" class="search-input" placeholder="搜索" />
+				<ul>
+					<li class="jd-li">
+						<input type="checkbox" class="checkbox-jd pull-left" value="1" style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">品类1</span>
+					</li>
+					<li class="jd-li">
+						<input type="checkbox" class="checkbox-jd pull-left" value="2" style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">品类2</span>
+					</li>
+					<li class="jd-li">
+						<input type="checkbox" class="checkbox-jd pull-left" value="3" style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">品类3</span>
+					</li>
+					<li class="jd-li">
+						<input type="checkbox" class="checkbox-jd pull-left" value="4" style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">品类4</span>
+					</li>
+					<li class="jd-li">
+						<input type="checkbox" class="checkbox-jd pull-left" value="5" style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">品类5</span>
+					</li>
+				</ul>
+				<div class="btn-cont">
+					<div class="sure-btn" id="sure-btn">确定</div>
+					<div class="cancel-btn" id="cancel-btn">取消</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	<div id="resultShape"></div>
+<script type="text/javascript">
+	function $(id){
+		return document.getElementById(id);
+	}
+	
+	var map;
+	var marker;
+	var markers = [];
+	var poi;
+	var overlays = [];
+	var mouseTool;
+    function loadmap(){
+		// 高德地图API功能
+		marker, map = new AMap.Map("map1", {
+			resizeEnable: true,
+			center: [116.397428, 39.90923],
+			zoom: 13
+		});
+		
+		mouseTool = new AMap.MouseTool(map); 
+		//监听draw事件可获取画好的覆盖物	
+		mouseTool.on('draw',function(e){
+			overlays.push(e.obj);
+		}) 
+	};
+	loadmap();
+
+    function draw(type){
+	  map.setDefaultCursor('crosshair');
+      switch(type){
+        case 'marker':{
+            mouseTool.marker({
+              //同Marker的Option设置
+            });
+            break;
+        }
+        case 'polyline':{
+            mouseTool.polyline({
+              strokeColor:'blue',
+			  draggable:'true',
+			  cursor:'crosshair'
+              //同Polyline的Option设置
+            });
+            break;
+        }
+        case 'polygon':{
+            mouseTool.polygon({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff',
+			  cursor:'crosshair'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'rectangle':{
+            mouseTool.rectangle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'circle':{
+            mouseTool.circle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Circle的Option设置
+            });
+            break;
+        }
+		case 'rule':{
+            mouseTool.rule({
+                startMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/start.png"
+                    })
+                },
+                endMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/end.png"
+                    }),
+                    offset: new AMap.Pixel(-9, -31)
+                },
+                midMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/mid.png"
+                    }),
+                    offset: new AMap.Pixel(-9, -31)
+                },
+                lineOptions : {//可缺省
+                    strokeStyle: "solid",
+                    strokeColor: "#FF33FF",
+                    strokeOpacity: 1,
+                    strokeWeight: 2
+                }
+                //同 RangingTool 的 自定义 设置，缺省为默认样式
+            });
+            break;
+        }
+        case 'measureArea':{
+            mouseTool.measureArea({
+                strokeColor:'#80d8ff',
+                fillColor:'#80d8ff',
+                fillOpacity:0.3
+              //同 Polygon 的 Option 设置
+            });
+            break;
+        }
+      }
+    }
+
+	// 实例化点标记
+    function addMarker() {
+		poi = new AMap.LngLat($("jd").value,$("wd").value);
+        marker = new AMap.Marker({
+            position: poi,
+        });
+        marker.setMap(map);
+		map.setCenter(poi,{zoom: 18});
+    }
+
+	// 添加多个点标记
+    function addOverlayGroup() {
+		//实例化覆盖物点标记
+		var gpsBase = $("gpsGroup").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		for(var i = 0,j = 0; i < gps.length; i+=2){
+			gps1[j] = [gps[i],gps[i+1]];
+			j++;
+		}
+		for (var i = 0; i < gps1.length; i++) {
+			var lnglat = gps1[i];
+			// 创建点实例
+			var marker = new AMap.Marker({
+				position: new AMap.LngLat(lnglat[0], lnglat[1]),
+				icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b' + (i + 1) + '.png',
+				extData: {
+					id: i + 1
+				}
+			});
+			markers.push(marker);
+		}
+		// 创建覆盖物群组，并将 marker 传给 OverlayGroup
+		var overlayGroups = new AMap.OverlayGroup(markers);
+		// 添加覆盖物群组
+		map.add(overlayGroups);
+		// 使地图自适应显示到合适的范围
+		var newCenter = map.setFitView();
+    }
+	
+	function clearAll() {
+		for(var i = 0; i < overlays.length; i++){
+            map.remove(overlays[i]);
+        }
+        overlays = [];
+    }
+	
+	function getPoint(){
+		$("resultShape").innerHTML='';
+		var olsLen = overlays.length;
+		for(var i = 0; i < olsLen; i++){
+			var overlay = overlays[i].getPath();
+			$("resultShape").innerHTML=$("resultShape").innerHTML+overlay.length+'边形:<br/>';
+			var olLen = overlay.length;
+			for(var j = 0; j < olLen; j++){
+				var grid = overlay[j];
+				$("resultShape").innerHTML=$("resultShape").innerHTML+(j+1)+"个点:("+grid.lng+","+grid.lat+");<br/>";
+			}
+        }
+	}
+	
+	var polyEditor = [];
+	function polyDataEditor(overlay){
+		var overlaysLen = overlays.length;
+		for(var i = 0; i < overlaysLen; i++){
+			polyEditor.push(new AMap.PolyEditor(map, overlays[i]));
+		}
+	}
+	
+	function Editing(state){
+		polyDataEditor(overlays);
+		var polyElen = polyEditor.length;
+		for(var i = 0; i < polyElen; i++){
+			state=='enable'?polyEditor[i].open():polyEditor[i].close();
+		}
+	}
+
+	var allGps = [];
+	function convertGps(){
+		var gpsBase = $("gps").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		var gpsLen = gps.length;
+		for(var i = 0; i < gpsLen; i+=2){
+			AMap.convertFrom([gps[i],gps[i+1]], $("gpsType").value, function (status, result) 
+			{
+				if (result.info === 'ok') 
+				{
+					gps1.push(result.locations); // Array.<LngLat>
+					
+				}
+			});
+		}
+		return allGps.push(gps1);
+	}
+	
+	function getGps(){
+		$("resultShape").innerHTML='高德经纬度:<br/>';
+		for(var i = 0; i < allGps.length; i++){
+			var overlay = allGps[i];
+			$("resultShape").innerHTML=$("resultShape").innerHTML+overlay+'<br/>';
+        }
+	}
+	
+	function zhuxian(){
+		var dataLen = data.data.length;
+		for (var i = 0; i < dataLen; i++) {
+			var lnglat = data.data[i];
+			// 创建点实例
+			var marker = new AMap.Marker({
+				position: new AMap.LngLat(lnglat[0], lnglat[1]),
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'center' //设置文本标注方位
+				}
+			});
+			markers.push(marker);
+		}
+		// 创建覆盖物群组，并将 marker 传给 OverlayGroup
+		var overlayGroups = new AMap.OverlayGroup(markers);
+		// 添加覆盖物群组
+		map.add(overlayGroups);
+		// 使地图自适应显示到合适的范围
+		var newCenter = map.setFitView();
+	};
+	
+	function showPolyline(road){
+		var polylineLen1 = northGsPolyline.northGsPolyline.length;
+		for(var i = 0; i < polylineLen1; i++){
+			var path = northGsPolyline.northGsPolyline[i];
+			var polyline = new AMap.Polyline({
+				path: path,
+				borderWeight: 3,
+				strokeColor: "blue", 
+				strokeOpacity: 1,
+				strokeWeight: 3,
+				// 折线样式还支持 'dashed'
+				strokeStyle: "solid",
+				// strokeStyle是dashed时有效
+				strokeDasharray: [10, 5],
+				lineJoin: 'miter',
+				lineCap: 'round',
+				zIndex: 50,
+			})
+			polyline.setMap(map);
+			var marker = new AMap.Marker({
+				position: northGsPolyline.northGsPolyline[i][0],
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'right' //设置文本标注方位
+				}
+			});
+			marker.setMap(map);
+		}
+		var polylineLen2 = southGsPolyline.southGsPolyline.length;
+		for(var i = 0; i < polylineLen2; i++){
+			var path = southGsPolyline.southGsPolyline[i];
+			var polyline = new AMap.Polyline({
+				path: path,
+				borderWeight: 3,
+				strokeColor: "blue", 
+				strokeOpacity: 1,
+				strokeWeight: 3,
+				// 折线样式还支持 'dashed'
+				strokeStyle: "solid",
+				// strokeStyle是dashed时有效
+				strokeDasharray: [10, 5],
+				lineJoin: 'miter',
+				lineCap: 'round',
+				zIndex: 50,
+			})
+			polyline.setMap(map);
+			var marker = new AMap.Marker({
+				position: southGsPolyline.southGsPolyline[i][0],
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'left' //设置文本标注方位
+				}
+			});
+			marker.setMap(map);
+		}
+	}
+	
+	function randomHexColor() { //随机生成十六进制颜色
+		return '#' + ('00000' + (Math.random() * 0x1000000 << 0).toString(16)).substr(-6);
+	}
+	
+	var arrC;
+	var varrC;
+	var arrcheckd;
+	var varrcheckd;
+	var arrRecord;
+	var varrRecord;
+	var arr;
+	var varr;
+	var arrSearch;
+	var arrSearchChecked;
+	var varrSearch;
+	var varrSearchChecked;
+	$(document).ready(function() {
+		arrC = new Array();
+		varrC = new Array();
+		arrcheckd = new Array();
+		varrcheckd = new Array();
+		arrcheckd = localStorage.getItem("arrcheckd");
+		varrcheckd = localStorage.getItem("varrcheckd");
+		arrRecord;
+		varrRecord;
+		arr = new Array();
+		varr = new Array();
+		if(arrcheckd) {
+			arrRecord = arrcheckd.split(",");
+			varrRecord = varrcheckd.split(",");
+		} else {
+			arrRecord = new Array();
+			varrRecord = new Array();
+		}
+		$(".jd-select-cont ul li span").each(function() {
+			var op = $(this).text();
+			if($.inArray(op, arrRecord) == -1) {
+				arr.push(op);
+				varr.push($(this).prev("input").val());
+			}
+		});
+	
+		arr = arrRecord.concat(arr);
+		varr = varrRecord.concat(varr);
+	});
+	//点击多选框事件
+	$("body").on('click', ".checkbox-jd", function() {
+		if($(this).prop("checked")) {
+			$(this).prop("checked");
+			arrRecord.push($(this).next(".type-name").html());
+			varrRecord.push($(this).val());
+		} else {
+			$(this).removeProp("checked");
+			arrRecord.splice($.inArray($(this).next(".type-name").html(), arrRecord), 1);
+			varrRecord.splice($.inArray($(this).val(), varrRecord), 1);
+		}
+	});
+	//点击保存多选框事件
+	$("#sure-btn").click(function() {
+		$(".jd-select-cont").hide();
+		console.log("arrRecord.length===" + arrRecord.length)
+		window.localStorage.setItem("arrcheckd", arrRecord.toString()); //存数据
+		window.localStorage.setItem("varrcheckd", varrRecord.toString()); //存数据
+	});
+	//点击取消保存多选框事件
+	$(".cancel-btn").click(function() {
+		$(".jd-select-cont").hide();
+	});
+	//点击展开下拉列表并排序   
+	$(".jd-select").click(function() {
+		$(".jd-select-cont").show();
+		$(".search-input").val("");
+		searchJD("");
+		//搜索
+		arrSearch = new Array();
+		arrSearchChecked = new Array();
+		varrSearch = new Array();
+		varrSearchChecked = new Array();
+		$(".search-input").keyup(function() {
+			var searchValue = $(".search-input").val();
+			searchJD(searchValue);
+		});
+	});
+	
+	function showAll() {
+		var arrNew = new Array();
+		var varrNew = new Array();
+		for(var i = 0; i < arr.length; i++) {
+			if($.inArray(arr[i], arrRecord) == -1) {
+				arrNew.push(arr[i]);
+				varrNew.push(varr[i]);
+			}
+		};
+		arrNew = arrRecord.concat(arrNew);
+		varrNew = varrRecord.concat(varrNew);
+		var html = '';
+		for(var i = 0; i < arrRecord.length; i++) {
+			html += '<li class="jd-li"><input type="checkbox" checked class=" checkbox-jd pull-left" value="' + varrNew[i] + '"  style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">' + arrNew[i] + '</span></li>';
+		}
+		for(var j = arrRecord.length; j < arrNew.length; j++) {
+			html += '<li class="jd-li"><input type="checkbox" class=" checkbox-jd pull-left" value="' + varrNew[j] + '"  style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">' + arrNew[j] + '</span></li>';
+		}
+		$(".jd-select-cont ul").html(html);
+	};
+	
+	function searchJD(searchValue) {
+		if(searchValue == "") {
+			showAll();
+			return;
+		} else {
+			arrSearch = new Array()
+			arrSearchChecked = new Array();
+			var arrNew = new Array();
+			varrSearch = new Array()
+			varrSearchChecked = new Array();
+			var varrNew = new Array();
+			for(var i = 0; i < arr.length; i++) {
+	
+				if($.inArray(arr[i], arrRecord) == -1) {
+					arrNew.push(arr[i]);
+					varrNew.push(varr[i]);
+				}
+	
+			};
+			arrNew = arrRecord.concat(arrNew);
+			varrNew = varrRecord.concat(varrNew);
+	
+			for(var i = 0; i < arrNew.length; i++) {
+				if(arrNew[i].indexOf(searchValue) != -1) {
+					arrSearch.push(arrNew[i]);
+					varrSearch.push(varrNew[i]);
+					if(i < arrRecord.length) {
+						arrSearchChecked.push(arrNew[i]);
+						varrSearchChecked.push(varrNew[i]);
+					}
+				}
+			}
+	
+			var html = '';
+			for(var i = 0; i < arrSearchChecked.length; i++) {
+	
+				html += '<li class="jd-li"><input type="checkbox" checked class=" checkbox-jd pull-left" value="' + varrSearchChecked[i] + '"  style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">' + arrSearchChecked[i] + '</span></li>';
+			}
+			for(var j = arrSearchChecked.length; j < arrSearch.length; j++) {
+	
+				html += '<li class="jd-li"><input type="checkbox" class=" checkbox-jd pull-left" value="' + varrSearch[j] + '"  style="width:22px;height:30px;margin:0;" /><span class="type-name pull-left">' + arrSearch[j] + '</span></li>';
+			}
+			$(".jd-select-cont ul").html(html);
+	
+		};
+	};
+	//点击选中下拉框中某一项
+	$("body").on('click', ".type-name", function() {
+	
+		$(".jd-select").html($(this).html());
+			$(".jd-select-cont").hide();
+		alert($(this).prev("input").val());
+	});
+	
+</script>
+</body>
+<body>
+	<div style="width:450px;margin:0 auto; padding:20px 0;">
+		<p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">粤ICP备19032903号-1</p>
+		<span class="v_line" style="float:left;height:10px;line-height:10px;margin: 3px 0px 0px 2px; color:#939393;">|</span>
+		<span class="v_line" style="float:left;height:10px;line-height:10px;margin: 3px 0px 0px 2px; color:#939393;">|</span>
+		<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=44200002443760" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;">
+			<img src="./image/beian.png" style="float:left;height:16px;line-height:16px;margin: 2px 0px 0px 2px; color:#939393;"/>
+			<p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">粤公网安备 44200002443760号</p>
+		</a>
+	</div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+	body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+	#allmap {width: 100%; height:600px; overflow: hidden;}
+	#result {width:100%;font-size:12px;}
+	dl,dt,dd,ul,li{
+		margin:0;
+		padding:0;
+		list-style:none;
+	}
+	p{font-size:12px;}
+	dt{
+		font-size:14px;
+		font-family:"微软雅黑";
+		font-weight:bold;
+		border-bottom:1px dotted #000;
+		padding:5px 0 5px 5px;
+		margin:5px 0;
+	}
+	dd{
+		padding:5px 0 0 5px;
+	}
+	li{
+		line-height:28px;
+	}
+	#var lnglats;
+	</style>
+	 <script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.14&key=2407d029be7a00660d1ab0ad8946eb70"></script>
+</head>
+<body>
+	<div id="allmap" style="overflow:hidden;zoom:1;position:relative;">	
+		<div id="map" style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;">
+       </div>
+	</div>
+	<div id="result">
+        <input type="button"  value="获取高德经纬度" onclick="getPoint()"/><br/>
+		<input id="addMarker" type="button" class="btn" onclick="addMarker()" value="添加点标记">
+	</div>
+	<div id="resultShape"></div>
+<script type="text/javascript">
+	function $(id){
+		return document.getElementById(id);
+	}
+	var map;
+	var poi;
+	var drawingManager ;
+	var overlays = [];	
+    function loadmap(){
+		// 高德地图API功能
+		map = new AMap.Map('map');
+		
+		// 传入经纬度，设置地图中心点
+		poi = new AMap.LngLat("116.39", "39.9");  // 标准写法
+		// 简写 var position = [116, 39]; 
+		
+		map.setZoomAndCenter(15, poi);
+		map.enableScrollWheelZoom(); 
+		
+		var marker = new AMap.Marker({
+            icon: "//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png",
+            position: [116.406315,39.908775],
+            offset: new AMap.Pixel(-13, -30)
+        });
+        marker.setMap(map);
+
+/*
+		var markerList = [[113.490431,23.093875],[113.4926,23.093924],[113.492459,23.093294],[113.490427,23.093243]];
+
+		map.add(markerList);
+		
+		marker = new AMap.Marker({
+            icon: "//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png",
+            position: [116.406315,39.908775],
+            offset: new AMap.Pixel(-13, -30)
+        });
+        marker.setMap(map);
+		*/
+	};
+	loadmap();
+	
+	// 实例化点标记
+    function addMarker() {
+        marker = new AMap.Marker({
+            icon: "//a.amap.com/jsapi_demos/static/demo-center/icons/poi-marker-default.png",
+            position: [116.406315,39.908775],
+            offset: new AMap.Pixel(-13, -30)
+        });
+        marker.setMap(map);
+    }
+	
+	
+	function getPoint(){
+		$("resultShape").innerHTML='高德经纬度:<br/>';
+		var gps = [[113.558061,23.097744],[113.557841,23.097657],[113.557298,23.099003],[113.557388,23.099061],
+[113.558236,23.097993],[113.558533,23.098114],[113.557801,23.099123],[113.557684,23.099082]];
+		AMap.convertFrom(gps, 'baidu', function (status, result) 
+		{
+			if (result.info === 'ok') 
+			{
+				overlays = result.locations; // Array.<LngLat>
+				
+			}
+		});
+		for(var i = 0; i < overlays.length; i++){
+			$("resultShape").innerHTML=$("resultShape").innerHTML+overlays[i]+',';
+			if(i%4 == 3)
+			{
+				$("resultShape").innerHTML=$("resultShape").innerHTML+'<br/>';
+			}
+        }
+	}
+</script>
+</body>
+</html>
+

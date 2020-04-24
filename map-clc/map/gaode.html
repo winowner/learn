@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<script src="data.txt"></script>
+	<script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.15&key=2407d029be7a00660d1ab0ad8946eb70&plugin=AMap.MouseTool,AMap.PolyEditor"></script>
+	<style type="text/css">
+		body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+		#allmap {width: 100%; height:800px; overflow: hidden;}
+		#result {width: 100%;font-size:12px;}
+		dl,dt,dd,ul,li{
+			margin:0;
+			padding:0;
+			list-style:none;
+		}
+		p{font-size:12px;}
+		dt{
+			font-size:14px;
+			font-family:"微软雅黑";
+			font-weight:bold;
+			border-bottom:1px dotted #000;
+			padding:5px 0 5px 5px;
+			margin:5px 0;
+		}
+		dd{
+			padding:5px 0 0 5px;
+		}
+		li{
+			line-height:28px;
+		}
+	</style>
+	<title>高德地图API</title>
+</head>
+<body>
+	<div id="allmap" style="overflow:hidden;zoom:1;position:relative;">	
+		<div id="map1" style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;">
+       </div>
+	</div>
+	<div id="result">
+		<input type="text" value="113.490431,23.093875,113.4926,23.093924" id="gps"/>
+		<input type="text" value="baidu" id="gpsType"/>
+		<input type="button"  value="转成高德经纬度" onclick="convertGps()"/>
+        <input type="button"  value="获取高德经纬度" onclick="getGps()"/>
+		<input type="text" value="113.49799165327521" id="jd"/>
+		<input type="text" value="23.09961780973866" id="wd"/>
+		<input type="button"  value="添加点" onclick="addMarker()">
+		<input type="text" value="113.49799165327521,23.09961780973866" id="gpsGroup"/>
+		<input type="button"  value="添加多个点" onclick="addOverlayGroup()">
+		<input type="button"  value="添加多边形" onclick="addPolygon()">
+		<input type="button"  value="显示桩号" onclick="zhuxian();"/>
+		<input type="button"  value="显示主线" onclick="addGShenPolygon();"/>
+		<input type="button"  value="清除所有覆盖物" onclick="clearAll()"/></br>
+		<input type="button"  value="获取顶点" onclick="getPoint()"/>
+        <input type="button"  value="开启编辑" onclick="Editing('enable')"/>
+        <input type="button"  value="关闭编辑" onclick="Editing('disable')"/>
+        <input type="button" name='func' value="画多边形" onclick="draw('polygon')" />
+        <!-- <input type="button" name='func' value="画矩形" onclick="draw('rectangle')" /> -->
+		<!-- <input type="button" name='func' value="画圆" onclick="draw('circle')" /> -->
+        <input type="button" name='func' value="画线" onclick="draw('polyline')" /> 
+        <!-- <input type="button" name='func' value="画点" onclick="draw('marker')" /> -->
+		<input type="button" name='func' value="测距" onclick="draw('rule')"/>
+		<!-- <input type="button" name='func' value="测面积" onclick="draw('measureArea')"/> -->
+		<input type="button" name='func' value="关闭工具" onclick="mouseTool.close()"/>
+		<a href="../index.html">回首页</a>
+		<a href="javascript:void(0);" class="btn-Traffic" id="btnTraffic">开启实时路况</a>
+		<a href="javascript:void(0);" class="btn-RoadNet" id="btnRoadNet">开启路网</a>
+		<a href="javascript:void(0);" class="btn-RSatell" id="btnSatell">开启卫星图</a>
+	</div>
+	<div id="resultShape"></div>
+<script type="text/javascript">
+	function $(id){
+		return document.getElementById(id);
+	}
+	
+	var map;
+	var marker;
+	var markers = [];
+	var poi;
+	var overlays = [];
+	var mouseTool;
+    function loadmap(){
+		// 高德地图API功能
+		marker, map = new AMap.Map("map1", {
+			resizeEnable: true,
+			center: [116.397428, 39.90923],
+			zoom: 13
+		});
+		
+		mouseTool = new AMap.MouseTool(map); 
+		//监听draw事件可获取画好的覆盖物	
+		mouseTool.on('draw',function(e){
+			overlays.push(e.obj);
+		}) 
+	};
+	loadmap();
+
+	/*
+	function changeStatus(e){
+        var x=document.getElementById('but-monitor');
+		var trafficLayer = new AMap.TileLayer.Traffic({zIndex:10}); //实时路况图层
+		trafficLayer.setMap(map);   //添加实时路况图层
+        if(x.innerHTML=="开启实时路况"){           //通过.innerHTML获取
+            x.childNodes[0].data ="关闭实时路况";   //通过.childNodes[0].data更改标签值
+			trafficLayer.show();
+        }else if(x.innerHTML=="关闭实时路况"){
+            x.childNodes[0].data ="开启实时路况";
+			trafficLayer.hide();   //隐藏实时路况图层
+			//trafficLayer.setMap(null);   //隐藏实时路况图层
+        }
+    }
+	*/
+	
+	var trafficLayer;
+	var btnTraffic = document.querySelector('#btnTraffic');
+    btnTraffic.addEventListener('click',function(){
+		var x=document.getElementById('btnTraffic');
+        if(x.innerHTML=="开启实时路况"){           //通过.innerHTML获取
+            x.childNodes[0].data ="关闭实时路况";   //通过.childNodes[0].data更改标签值
+			trafficLayer = new AMap.TileLayer.Traffic({zIndex:10}); //实时路况图层
+			trafficLayer.setMap(map);   //添加实时路况图层
+        }else if(x.innerHTML=="关闭实时路况"){
+            x.childNodes[0].data ="开启实时路况";
+			//trafficLayer.hide();   //隐藏实时路况图层
+			trafficLayer.setMap(null);   //隐藏实时路况图层
+        }
+    })
+	
+	//路网图层
+	var roadNetLayer;
+	var btnRoadNet = document.querySelector('#btnRoadNet');
+    btnRoadNet.addEventListener('click',function(){
+		var x=document.getElementById('btnRoadNet');
+        if(x.innerHTML=="开启路网"){           //通过.innerHTML获取
+            x.childNodes[0].data ="关闭路网";   //通过.childNodes[0].data更改标签值
+			roadNetLayer = new AMap.TileLayer.RoadNet({zIndex:10}); //实例化路网图层
+			roadNetLayer.setMap(map);   
+        }else if(x.innerHTML=="关闭路网"){
+            x.childNodes[0].data ="开启路网";
+			roadNetLayer.setMap(null);  
+        }
+    })
+	
+	//卫星图
+	var satellLayer;
+	var btnSatell = document.querySelector('#btnSatell');
+    btnSatell.addEventListener('click',function(){
+		var x=document.getElementById('btnSatell');
+        if(x.innerHTML=="开启卫星图"){           //通过.innerHTML获取
+            x.childNodes[0].data ="关闭卫星图";   //通过.childNodes[0].data更改标签值
+			satellLayer = new AMap.TileLayer.Satellite({zIndex:10}); //实例化卫星图
+			satellLayer.setMap(map);   
+        }else if(x.innerHTML=="关闭卫星图"){
+            x.childNodes[0].data ="开启卫星图";
+			satellLayer.setMap(null);  
+        }
+    })
+	
+    function draw(type){
+	  map.setDefaultCursor('crosshair');
+      switch(type){
+        case 'marker':{
+            mouseTool.marker({
+              //同Marker的Option设置
+            });
+            break;
+        }
+        case 'polyline':{
+            mouseTool.polyline({
+              strokeColor:'blue',
+			  draggable:'true',
+			  cursor:'crosshair'
+              //同Polyline的Option设置
+            });
+            break;
+        }
+        case 'polygon':{
+            mouseTool.polygon({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff',
+			  cursor:'crosshair'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'rectangle':{
+            mouseTool.rectangle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Polygon的Option设置
+            });
+            break;
+        }
+        case 'circle':{
+            mouseTool.circle({
+              fillColor:'#00b0ff',
+              strokeColor:'#80d8ff'
+              //同Circle的Option设置
+            });
+            break;
+        }
+		case 'rule':{
+            mouseTool.rule({
+                startMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/start.png"
+                    })
+                },
+                endMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/end.png"
+                    }),
+                    offset: new AMap.Pixel(-9, -31)
+                },
+                midMarkerOptions : {//可缺省
+                    icon: new AMap.Icon({
+                        size: new AMap.Size(19, 31),//图标大小
+                        imageSize:new AMap.Size(19, 31),
+                        image: "https://webapi.amap.com/theme/v1.3/markers/b/mid.png"
+                    }),
+                    offset: new AMap.Pixel(-9, -31)
+                },
+                lineOptions : {//可缺省
+                    strokeStyle: "solid",
+                    strokeColor: "#FF33FF",
+                    strokeOpacity: 1,
+                    strokeWeight: 2
+                }
+                //同 RangingTool 的 自定义 设置，缺省为默认样式
+            });
+            break;
+        }
+        case 'measureArea':{
+            mouseTool.measureArea({
+                strokeColor:'#80d8ff',
+                fillColor:'#80d8ff',
+                fillOpacity:0.3
+              //同 Polygon 的 Option 设置
+            });
+            break;
+        }
+      }
+    }
+
+	// 实例化点标记
+    function addMarker() {
+		poi = new AMap.LngLat($("jd").value,$("wd").value);
+        marker = new AMap.Marker({
+            position: poi,
+        });
+        marker.setMap(map);
+		map.setCenter(poi,{zoom: 18});
+    }
+
+	// 添加多个点标记
+    function addOverlayGroup() {
+		//实例化覆盖物点标记
+		var gpsBase = $("gpsGroup").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		for(var i = 0,j = 0; i < gps.length; i+=2){
+			gps1[j] = [gps[i],gps[i+1]];
+			j++;
+		}
+		for (var i = 0; i < gps1.length; i++) {
+			var lnglat = gps1[i];
+			// 创建点实例
+			var marker = new AMap.Marker({
+				position: new AMap.LngLat(lnglat[0], lnglat[1]),
+				//icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b' + (i + 1) + '.png',
+				extData: {
+					id: i + 1
+				}
+			});
+			markers.push(marker);
+		}
+		// 创建覆盖物群组，并将 marker 传给 OverlayGroup
+		var overlayGroups = new AMap.OverlayGroup(markers);
+		// 添加覆盖物群组
+		map.add(overlayGroups);
+		// 使地图自适应显示到合适的范围
+		var newCenter = map.setFitView();
+    }
+	
+	// 添加多边形覆盖物
+    function addPolygon(){
+		//实例化覆盖物点标记
+		var gpsBase = $("gpsGroup").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		for(var i = 0,j = 0; i < gps.length; i+=2){	
+			gps1[j] = [gps[i], gps[i+1]];
+			j++;
+		}
+		var polygon = new AMap.Polygon({
+			path: gps1,
+			borderWeight: 3,
+			strokeColor: "blue", 
+			strokeOpacity: 1,
+			strokeWeight: 1,
+			fillColor: "",
+			// 折线样式还支持 'dashed'
+			strokeStyle: "solid",
+			// strokeStyle是dashed时有效
+			strokeDasharray: [10, 5],
+			lineJoin: 'miter',
+			lineCap: 'round',
+			zIndex: 50,
+		})
+		polygon.setMap(map);
+		map.setFitView();
+    }
+	
+	// 添加广深主电子围栏
+    function addGShenPolygon(){
+		var polygon = new AMap.Polygon({
+			path: gshengaode.gshengaode,
+			borderWeight: 3,
+			strokeColor: "blue", 
+			strokeOpacity: 1,
+			strokeWeight: 1,
+			fillColor: "",
+			// 折线样式还支持 'dashed'
+			strokeStyle: "solid",
+			// strokeStyle是dashed时有效
+			strokeDasharray: [10, 5],
+			lineJoin: 'miter',
+			lineCap: 'round',
+			zIndex: 50,
+		})
+		polygon.setMap(map);
+		map.setFitView();
+    }
+	
+	function clearAll() {
+		for(var i = 0; i < overlays.length; i++){
+            map.remove(overlays[i]);
+        }
+        overlays = [];
+    }
+	
+	function getPoint(){
+		$("resultShape").innerHTML='';
+		var olsLen = overlays.length;
+		for(var i = 0; i < olsLen; i++){
+			var overlay = overlays[i].getPath();
+			$("resultShape").innerHTML=$("resultShape").innerHTML+overlay.length+'边形:<br/>';
+			var olLen = overlay.length;
+			for(var j = 0; j < olLen; j++){
+				var grid = overlay[j];
+				$("resultShape").innerHTML=$("resultShape").innerHTML+(j+1)+"个点:("+grid.lng+","+grid.lat+");<br/>";
+			}
+        }
+	}
+	
+	var polyEditor = [];
+	function polyDataEditor(overlay){
+		var overlaysLen = overlays.length;
+		for(var i = 0; i < overlaysLen; i++){
+			polyEditor.push(new AMap.PolyEditor(map, overlays[i]));
+		}
+	}
+	
+	function Editing(state){
+		polyDataEditor(overlays);
+		var polyElen = polyEditor.length;
+		for(var i = 0; i < polyElen; i++){
+			state=='enable'?polyEditor[i].open():polyEditor[i].close();
+		}
+	}
+
+	var gpsMap = new Map();
+	var allGps = [];
+	function convertGps(){
+		var gpsBase = $("gps").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		var gpsLen = gps.length;
+		for(var i = 0; i < gpsLen; i+=80){
+			var gpsArray = [[gps[i],gps[i+1]],[gps[i+2],gps[i+3]],[gps[i+4],gps[i+5]],[gps[i+6],gps[i+7]],[gps[i+8],gps[i+9]],[gps[i+10],gps[i+11]],[gps[i+12],gps[i+13]],[gps[i+14],gps[i+15]],[gps[i+16],gps[i+17]],[gps[i+18],gps[i+19]],[gps[i+20],gps[i+21]],[gps[i+22],gps[i+23]],[gps[i+24],gps[i+25]],[gps[i+26],gps[i+27]],[gps[i+28],gps[i+29]],[gps[i+30],gps[i+31]],[gps[i+32],gps[i+33]],[gps[i+34],gps[i+35]],[gps[i+36],gps[i+37]],[gps[i+38],gps[i+39]],[gps[i+40],gps[i+41]],[gps[i+42],gps[i+43]],[gps[i+44],gps[i+45]],[gps[i+46],gps[i+47]],[gps[i+48],gps[i+49]],[gps[i+50],gps[i+51]],[gps[i+52],gps[i+53]],[gps[i+54],gps[i+55]],[gps[i+56],gps[i+57]],[gps[i+58],gps[i+59]],[gps[i+60],gps[i+61]],[gps[i+62],gps[i+63]],[gps[i+64],gps[i+65]],[gps[i+66],gps[i+67]],[gps[i+68],gps[i+69]],[gps[i+70],gps[i+71]],[gps[i+72],gps[i+73]],[gps[i+74],gps[i+75]],[gps[i+76],gps[i+77]],[gps[i+78],gps[i+79]]];
+			AMap.convertFrom(gpsArray, $("gpsType").value, function (status, result) 
+			{
+				console.log(i + " + " + result.info);
+				if (result.info === 'ok') 
+				{
+					
+					//gpsMap.set(i,result.locations);
+					gps1.push(result.locations); // Array.<LngLat>
+				}
+			});
+		}
+		return allGps.push(gps1);
+	}
+	
+	function getGps(){
+		//gpsMap.forEach(function(key){
+		//　　console.log("key",key);  //输出的是map中的value值
+		//});
+
+		$("resultShape").innerHTML='高德经纬度:<br/>';
+		var x = allGps.length;
+		for(var i = 0; i < x; i++){
+			var data1 = allGps[i];
+			var y = data1.length;
+			for(var j = 0; j < y; j++){
+				var data2 = data1[j];
+				$("resultShape").innerHTML=$("resultShape").innerHTML+ "[" + data2 + "],";
+				var z = data2.length;
+				//for(var k = 0; k < z;k++){
+				//$("resultShape").innerHTML=$("resultShape").innerHTML+ "[" + data2[k] + "],";
+				//}
+			}
+        }
+	}
+	
+	function zhuxian(){
+		var dataLen = data.data.length;
+		for (var i = 0; i < dataLen; i++) {
+			var lnglat = data.data[i];
+			// 创建点实例
+			var marker = new AMap.Marker({
+				position: new AMap.LngLat(lnglat[0], lnglat[1]),
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'center' //设置文本标注方位
+				}
+			});
+			markers.push(marker);
+		}
+		// 创建覆盖物群组，并将 marker 传给 OverlayGroup
+		var overlayGroups = new AMap.OverlayGroup(markers);
+		// 添加覆盖物群组
+		map.add(overlayGroups);
+		// 使地图自适应显示到合适的范围
+		var newCenter = map.setFitView();
+	};
+	
+	function showPolyline(road){
+		var polylineLen1 = northGsPolyline.northGsPolyline.length;
+		for(var i = 0; i < polylineLen1; i++){
+			var path = northGsPolyline.northGsPolyline[i];
+			var polyline = new AMap.Polyline({
+				path: path,
+				borderWeight: 3,
+				strokeColor: "blue", 
+				strokeOpacity: 1,
+				strokeWeight: 3,
+				// 折线样式还支持 'dashed'
+				strokeStyle: "solid",
+				// strokeStyle是dashed时有效
+				strokeDasharray: [10, 5],
+				lineJoin: 'miter',
+				lineCap: 'round',
+				zIndex: 50,
+			})
+			polyline.setMap(map);
+			var marker = new AMap.Marker({
+				position: northGsPolyline.northGsPolyline[i][0],
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'right' //设置文本标注方位
+				}
+			});
+			marker.setMap(map);
+		}
+		var polylineLen2 = southGsPolyline.southGsPolyline.length;
+		for(var i = 0; i < polylineLen2; i++){
+			var path = southGsPolyline.southGsPolyline[i];
+			var polyline = new AMap.Polyline({
+				path: path,
+				borderWeight: 3,
+				strokeColor: "blue", 
+				strokeOpacity: 1,
+				strokeWeight: 3,
+				// 折线样式还支持 'dashed'
+				strokeStyle: "solid",
+				// strokeStyle是dashed时有效
+				strokeDasharray: [10, 5],
+				lineJoin: 'miter',
+				lineCap: 'round',
+				zIndex: 50,
+			})
+			polyline.setMap(map);
+			var marker = new AMap.Marker({
+				position: southGsPolyline.southGsPolyline[i][0],
+				label:{
+					offset: '',  //设置文本标注偏移量
+					content: "<div class='info'>" + i + "</div>", //设置文本标注内容
+					direction: 'left' //设置文本标注方位
+				}
+			});
+			marker.setMap(map);
+		}
+	}
+	
+	function randomHexColor() { //随机生成十六进制颜色
+		return '#' + ('00000' + (Math.random() * 0x1000000 << 0).toString(16)).substr(-6);
+	}
+
+</script>
+</body>
+</html>

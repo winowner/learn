@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title></title>
+<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css" />
+<link rel="stylesheet" href="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.css" />
+<style type="text/css">
+a {
+display: inline-block;
+}
+
+body,
+html,
+#allmap {
+width: 100%;
+height: 100%;
+overflow: hidden;
+margin: 0;
+font-family: "微软雅黑";
+font-size: 14px;
+}
+
+.box {
+position: absolute;
+top: 8px;
+right: 190px;
+cursor: pointer
+}
+
+.preserve {
+padding: 8px;
+border-radius: 2px;
+border: 1px solid #ddd;
+background: #fff;
+color: #204D74;
+box-shadow: 0 0 1px 1px #ddd;
+}
+</style>
+<title>百度地图覆盖物可以删除可以编辑已经获取点、面的经纬度</title>
+</head>
+
+
+<body>
+<div id="allmap"></div>
+<div class="box">
+<a href="#"><button class="preserve">保存</button></a>
+</div>
+</body>
+<!--申请的key值-->
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=WaXYo8dQd5FMs6oYo2LzYnpqEdpkK402"></script>
+<!--加载鼠标绘制工具-->
+<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
+<!--加载检索信息窗口-->
+<script type="text/javascript" src="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.js"></script>
+<script src="js/jquery-1.11.0.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+
+$(function() {
+var overlays = []; //保存面覆盖物的个数
+var coverlays = []; //保存点覆盖物的个数
+// 百度地图初始化
+var map = new BMap.Map("allmap", {
+enableMapClick: false
+});
+map.centerAndZoom("重庆市", 12);
+map.enableScrollWheelZoom(); //启用滚轮放大缩小，默认禁用
+map.enableContinuousZoom(); //启用地图惯性拖拽，默认禁用
+
+
+var bmap = {
+drawingManager: '',
+styleOptions: {
+strokeColor: "red", //边线颜色。  
+fillColor: "red", //填充颜色。当参数为空时，圆形将没有填充效果。  
+strokeWeight: 3, //边线的宽度，以像素为单位。  
+strokeOpacity: 0.5, //边线透明度，取值范围0 - 1。  
+fillOpacity: 0.1, //填充的透明度，取值范围0 - 1。  
+strokeStyle: 'solid' //边线的样式，solid或dashed。  
+},
+
+
+/*------实例化-----*/
+init: function() {
+var styleOptions = this.styleOptions;
+map.enableScrollWheelZoom();
+//实例化鼠标绘制工具  
+this.drawingManager = new BMapLib.DrawingManager(map, {
+isOpen: false, //是否开启绘制模式  
+enableDrawingTool: true, //是否显示工具栏  
+drawingToolOptions: {
+anchor: BMAP_ANCHOR_TOP_RIGHT, //位置
+offset: new BMap.Size(5, 5), //偏离值
+scale: 0.8, //工具栏缩放比例
+drawingModes: [
+//工具栏上可以选择出现的绘制模式
+BMAP_DRAWING_MARKER,
+BMAP_DRAWING_POLYGON,
+]
+},
+polygonOptions: styleOptions, //多边形的样式  
+});
+//添加鼠标绘制工具监听事件，用于获取绘制结果  
+this.drawingManager.addEventListener('overlaycomplete', bmap.overlaycomplete);
+},
+overlaycomplete: function(e) {
+// overlays.push(e.overlay);
+switch(e.drawingMode) {
+case "marker":
+{
+coverlays.push(e.overlay);
+var marker = e.overlay;
+/*-----------------标注右键删除-------------------------*/
+var markerMenu = new BMap.ContextMenu();
+markerMenu.addItem(new BMap.MenuItem('删除标注 ', function() {
+map.removeOverlay(marker);
+var path = e.overlay.getPosition();
+var coverPlan = ""; //获取点的经纬度
+var coverPlanA = ""; //获取所有点的经纬度
+coverPlan = "lng:" + path.lng + "\n lat:" + path.lat;
+coverPlanA += coverPlan;
+coverPlanA.replace(coverPlan);
+console.log(coverPlan + '删除的点')
+coverlays.splice($.inArray(marker, coverlays), 1); //数组里删除点覆盖物对应的经纬度
+// console.log(coverlays);
+}));
+
+
+marker.addContextMenu(markerMenu);
+/*-----------------标注点击弹窗-------------------------*/
+marker.addEventListener("click", function(e) {
+var sContent =
+"<form method='post' action=''>" +
+"<table>" +
+"<tr>" +
+"<td><b>名称：</b>" +
+"<input type='text' name='Name' style='margin-top:10px;width:200px'/>" +
+"</td>" +
+"</tr>" +
+"<tr>" +
+"<td><b>坐标：</b>" +
+"<input type='text' name='lng' value='" + e.point.lng + "' style='width:80px;'/>" +
+"<span>-</span>" +
+"<input type='text' name='lat' value='" + e.point.lat + "' style='width:80px;'/>" +
+"</td>" +
+"</tr>" +
+"<tr >" +
+"<td><b>备注：</b>" +
+"<textarea  rows=6  name='Remark' style='width:198px;vertical-align:top;'></textarea>" +
+"</td>" +
+"</tr>" +
+"<tr>" +
+"<td style='text-align:right;'>" +
+"<input οnclick='preserve()' type='button' value='保存' style='width: 40px;line-height: 40px;'/>" +
+"</td>" +
+"</tr>" +
+"</talbe>" +
+"</form>";
+var opts = {
+enableMessage: false
+};
+var infoWindow = new BMap.InfoWindow(sContent, opts);
+this.openInfoWindow(infoWindow);
+});
+var label = new BMap.Label("比如某某负责的区域", {
+offset: new BMap.Size(20, -10)
+});
+//改变marker右边文字以及边框的样式
+label.setStyle({
+color: "#000",
+fontSize: "12px",
+height: "20px",
+lineHeight: "20px",
+fontFamily: "微软雅黑",
+padding: "3px 10px",
+border: '1px solid blue',
+borderRadius: "4px",
+opacity: 0.8
+});
+marker.setLabel(label);
+}
+break;
+case "polygon":
+{
+overlays.push(e.overlay);
+var polygon = e.overlay;
+/*-----------------多边形右键删除以及编辑多边形-------------------------*/
+var polygonMenu = new BMap.ContextMenu();
+var txtMenuItem = [{
+text: '删除多边形',
+callback: function() {
+map.removeOverlay(polygon);
+var path = e.overlay.getPath(); //Array<Point> 返回多边型的点数组
+var locationPlan = ""; //获取多边形的经纬度
+var locationPlanA = ""; //获取多边形的全部经纬度
+for(var i = 0; i < path.length; i++) {
+locationPlan = "lng:" + path[i].lng + "\n lat:" + path[i].lat;
+locationPlanA += locationPlan;
+locationPlanA.replace(locationPlan);
+console.log(locationPlan + '删除的面');
+}
+overlays.splice($.inArray(polygon, overlays), 1); //数组里删除多边形覆盖物对应的经纬度
+}
+},
+{
+text: '编辑多边形',
+callback: function() {
+polygon.enableEditing();
+}
+}
+];
+
+for(var i=0;i<txtMenuItem.length;i++){
+polygonMenu.addItem(new BMap.MenuItem(txtMenuItem[i].text,txtMenuItem[i].callback,100));
+}
+
+polygon.addContextMenu(polygonMenu);
+}
+break;
+}
+},
+}
+bmap.init();
+
+//点击保存面的经纬度
+$('.preserve').on('click', function(e) {
+var locationPlanA = "";
+var coverPlanA = "";
+//获取多边形的全部经纬度
+for(var i = 0; i < overlays.length; i++) {
+var path = overlays[i].getPath();
+for(var j = 0; j < path.length; j++) {
+locationPlanA += "lng:" + path[j].lng + "\n lat:" + path[j].lat;
+}
+overlay.disableEditing();  //关闭编辑多边形
+}
+//获取点的全部经纬度
+for(var i = 0; i < coverlays.length; i++) {
+var path = coverlays[i].getPosition();
+coverPlanA += "lng:" + path.lng + "\n lat:" + path.lat;
+}
+
+console.log(locationPlanA + '全部多边形的经纬度');
+console.log(coverPlanA + '全部点的经纬度');
+console.log(overlays.length + '面的个数');
+console.log(coverlays.length + '点的个数');
+});
+})
+//点击信息框里面的保存
+function preserve(){
+alert(2);
+var Mc=$('input[name=Name]').val();  //获取信息框里面的名称
+console.log(Mc);
+}
+</script>
+
+
+</html>
+--------------------- 
+作者：qq_40039641 
+来源：CSDN 
+原文：https://blog.csdn.net/qq_40039641/article/details/79002098 
+版权声明：本文为博主原创文章，转载请附上博文链接！

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+	body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+	#allmap {width: 100%; height:800px; overflow: hidden;}
+	#result {width: 100%; font-size:12px;}
+	dl,dt,dd,ul,li{
+		margin:0;
+		padding:0;
+		list-style:none;
+	}
+	p{font-size:12px;}
+	dt{
+		font-size:14px;
+		font-family:"微软雅黑";
+		font-weight:bold;
+		border-bottom:1px dotted #000;
+		padding:5px 0 5px 5px;
+		margin:5px 0;
+	}
+	dd{
+		padding:5px 0 0 5px;
+	}
+	li{
+		line-height:28px;
+	}
+	
+	div.changeDiv input {
+		font-size: 1em;
+		font-family: 仿宋, serif;
+		width: 60%;
+		display: block;
+		margin-left: 10%;
+		opacity: 0.8;
+		padding: 0.2em;
+		color: #000000;
+		border-radius: 10px;
+		background-color: #bed8df;
+	}
+	</style>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=WaXYo8dQd5FMs6oYo2LzYnpqEdpkK402"></script>
+	<script type="text/javascript" src="data.txt"></script>
+	<script type="text/javascript" src="http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js"></script>
+	<!--加载鼠标绘制工具-->
+	<script type="text/javascript" src="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.js"></script>
+	<link rel="stylesheet" href="http://api.map.baidu.com/library/DrawingManager/1.4/src/DrawingManager_min.css"/>
+	<!--加载检索信息窗口-->
+	<script type="text/javascript" src="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.js"></script>
+	<link rel="stylesheet" href="http://api.map.baidu.com/library/SearchInfoWindow/1.4/src/SearchInfoWindow_min.css"/>
+	<title>百度地图API</title>
+</head>
+<body>
+	<div id="allmap" style="overflow:hidden;zoom:1;position:relative;">	
+		<div id="map" style="height:100%;-webkit-transition: all 0.5s ease-in-out;transition: all 0.5s ease-in-out;">
+       </div>
+	</div>
+	<div id="result">
+		<input type="text" value="114.062896" id="jd"/>
+		<input type="text" value="22.516396" id="wd"/>
+		<input type="button" value="搜索" onclick="searchPoi();"/>
+		<input type="text" value="[114.066916,22.517886],[114.066772,22.518232],[114.068057,22.518916],[114.068434,22.518574]," id="gpsGroup"/>
+		<input type="button" value="添加多边形" onclick="add('polygon')">
+		<input type="button" value="添加轨迹" onclick="add('polyline')">
+		<input type="button" value="添加点" onclick="add('point')">
+		<input type="button" value="显示原主线" onclick="zhuxian(this);"/>
+		<input type="button" value="主线电子围栏（小）" onclick="showPolygon(GShaoMS)"/>
+		<input type="button" value="主线电子围栏（大）" onclick="showPolygon(GShaoMB)"/>
+		<label for="dataType">数据:</label><select id="dataType"><option value="1">电子围栏</option><option value="2">画的多边形</option><option value="3">查询的多边形</option><option value="4">主线</option></select>
+		<input type="button" value="获取顶点" onclick="getPoint()"/>
+        <input type="button" value="开启编辑功能" onclick="Editing('enable')"/>
+        <input type="button" value="关闭编辑功能" onclick="Editing('disable')"/>
+		<input type="button" value="清除覆盖物" onclick="clearOverlays()"/>
+		<input type="button" value="开启删除功能" onclick="openDelPoint()"/> 
+        <input type="button" value="关闭删除功能" onclick="closeDelPoint()"/>
+		<a href="../index.html">回首页</a><br/>
+        <input type="button" value="画多边形" onclick="draw(BMAP_DRAWING_POLYGON)" />
+        <!-- <input type="button"  value="画矩形" onclick="draw(BMAP_DRAWING_RECTANGLE)" /> -->
+        <!-- <input type="button"  value="画线" onclick="draw(BMAP_DRAWING_POLYLINE)" />  -->
+        <!-- <input type="button"  value="画点" onclick="draw(BMAP_DRAWING_MARKER)" /> -->
+		<input type="button" value="测距" onclick="distanceTool()"/>
+		<input type="button" value="打开全景模式" onclick="panorama(this)"/>
+		<input type="button" value="关闭全景模式" onclick="map.removeTileLayer(panoramaCoverageLayer)"/>
+		<input type="button" value="打开全景图" onclick="showPanorama();"/>
+		<input type="button" value="关闭全景图" onclick="panorama.hide();"/>
+		<input type="text" value="google" id="gpsType"/>
+		<input type="button" value="批量转换经纬度" onclick="convert();"/>
+		<a>性别:</a> <input id="sex" type="text" list="sexlist"> <datalist id="sexlist"> <option>男</option> <option>女</option> </datalist>
+		<input type="button" value="开启删除功能(test)" onclick="openDelPointTest()"/> 
+		<!-- <span>右键获取任意点的经纬度</span> -->
+	</div>
+	<div id="resultShape"></div>
+    <div id="shape">坐标为</div>
+<script type="text/javascript">
+
+		/*
+		<input id="wlmsinput" name="maktMaktx" list="wlmslist" value="${model.maktMaktx}"/> <datalist id="wlmslist"> <c:forEach var="wl" items="${wuliaocp}"> <option value="${wl.maktx }">${wl.maktx }</option> </c:forEach> </datalist>
+
+*/
+	function $(id){
+		return document.getElementById(id);
+	}
+	var styleOptionsRed = {
+		strokeColor:"red",    //边线颜色。
+		fillColor:"",      //填充颜色。当参数为空时，圆形将没有填充效果。
+		strokeWeight: 3,       //边线的宽度，以像素为单位。
+		strokeOpacity: 0.5,	   //边线透明度，取值范围0 - 1。
+		fillOpacity: 0.1,      //填充的透明度，取值范围0 - 1。
+		strokeStyle: 'solid' //边线的样式，solid或dashed。
+	}
+	var styleOptionsBlue = {
+		strokeColor:"blue",    //边线颜色。
+		fillColor:"",      //填充颜色。当参数为空时，圆形将没有填充效果。
+		strokeWeight: 1,       //边线的宽度，以像素为单位。
+		strokeOpacity: 1,	   //边线透明度，取值范围0 - 1。
+		fillOpacity: 0.6,      //填充的透明度，取值范围0 - 1。
+		strokeStyle: 'solid' //边线的样式，solid或dashed。
+	}
+	var distanceOpts = {
+		followText : "", //{String} 测距过程中，提示框文字,
+		unit : "metric", //{String} 测距结果所用的单位制，可接受的属性为"metric"表示米制和"us"表示美国传统单位,
+		lineColor : "black", //{String} 折线颜色,
+		lineStroke : 3, //{Number} 折线宽度,
+		opacity : "", //{Number} 透明度,
+		lineStyle : "dashed", //{String} 折线的样式，只可设置solid和dashed,
+		secIcon : "", //{BMap.Icon} 转折点的Icon,
+		closeIcon : "", //{BMap.Icon} 关闭按钮的Icon,
+		cursor : "", //{String} 跟随的鼠标样式}
+	}
+	
+	var map;
+	var poi;
+	var dataTypeValue;
+	var drawingManager ;
+	var overlays = [];
+	var overlaysMainlinePolygon = [];
+	var overlaysAdd = [];
+	var overlaysSearch = [];
+	var overlaysMainlinePolyline = [];
+	var overlaycomplete = function(e){
+		overlaysAdd.push(e.overlay); 
+	};
+	
+	function loadmap(){
+		// 百度地图API功能
+		map = new BMap.Map('map', {minZoom:5,maxZoom:19});
+		map.addControl(new BMap.MapTypeControl());//添加地图类型控件
+		poi = new BMap.Point($("jd").value,$("wd").value);
+		map.centerAndZoom(poi, 16);
+		map.enableScrollWheelZoom();
+
+		//实例化鼠标绘制工具
+		drawingManager = new BMapLib.DrawingManager(map, {
+			isOpen: false, //是否开启绘制模式
+			//enableDrawingTool: true, //是否显示工具栏
+			drawingToolOptions: {
+				anchor: BMAP_ANCHOR_TOP_RIGHT, //位置
+				offset: new BMap.Size(5, 5), //偏离值
+			},
+			circleOptions: styleOptionsRed, //圆的样式
+			polylineOptions: styleOptionsRed, //线的样式
+			polygonOptions: styleOptionsRed, //多边形的样式
+			rectangleOptions: styleOptionsRed //矩形的样式
+		}); 
+		
+		//添加鼠标绘制工具监听事件，用于获取绘制结果
+		drawingManager.addEventListener('overlaycomplete', overlaycomplete);
+		/*
+		map.addEventListener("rightclick",function(e){
+			if(confirm(e.point.lng + "," + e.point.lat)){
+				$("shape").innerHTML=$("shape").innerHTML+" <br/>("+e.point.lng+","+e.point.lat+")";
+			}
+		});*/
+	};
+	loadmap();
+	
+	function searchPoi(){
+		poi = new BMap.Point($("jd").value,$("wd").value);
+		map.enableScrollWheelZoom();  
+		var marker = new BMap.Marker(poi);        // 创建标注
+		map.addOverlay(marker);                   // 将标注添加到地图中
+		drawingManager.addEventListener("markercomplete", function(e, overlay) {
+			alert(overlay);
+		});
+		map.setCenter(poi);
+	};
+
+	var polySearch = [];
+	// 添加覆盖物
+    function add(dataType) {
+		//实例化覆盖物点标记
+		var gpsBase = $("gpsGroup").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{2,}/g);
+		var gps1 = "";
+		var pois = [];
+		for(var i = 0; i < gps.length; i+=2){
+			if(dataType == "point"){
+				poi =  new BMap.Point(gps[i], gps[i+1]);
+				pois.push(poi);
+			}
+			else{
+				if(i > 0){
+					gps1 = gps1 + ";";
+				};
+				gps1 = gps1 + gps[i] + "," + gps[i+1];
+			}
+		}
+		if(dataType == "polygon"){
+			overlaysSearch = new BMap.Polygon(gps1, styleOptionsRed); //建立多边形覆盖物
+		}
+		else if(dataType == "polyline"){
+			overlaysSearch = new BMap.Polyline(gps1, styleOptionsRed); //建立线覆盖物
+		}
+		else if(dataType == "point"){
+			overlaysSearch = new BMap.PointCollection(pois);  // 初始化PointCollection
+		}
+		polySearch.push(overlaysSearch);
+		map.addOverlay(overlaysSearch);
+		var poi = new BMap.Point(gps[0],gps[1]);
+		map.setCenter(poi);
+    }
+	
+	var gpsArray;
+	//判断数据类型
+	function setDataType(){
+		var myType = document.getElementById("dataType");//获取select对象
+		var index = myType.selectedIndex; //获取选项中的索引，selectIndex表示的是当前所选中的index
+		dataTypeValue = myType.options[index].value;//获取选项中options的value值
+		//myType.options[index].text;//获取选项中options的value值
+		if(dataTypeValue == 1){
+			gpsArray = overlaysMainlinePolygon;
+		}
+		else if(dataTypeValue == 2){
+			gpsArray = overlaysAdd;
+		}
+		else if(dataTypeValue == 3){
+			gpsArray = polySearch;
+		}
+		else if(dataTypeValue == 4){
+			gpsArray = overlaysMainlinePolyline;
+		}
+	}
+	
+	function getPoint(){
+		$("resultShape").innerHTML='';
+		setDataType();
+		var x = gpsArray.length;
+		for(var i = 0; i < x; i++){
+			var overlay = gpsArray[i].getPath();
+			$("resultShape").innerHTML=$("resultShape").innerHTML+overlay.length+'边形:<br/>';
+			var y = overlay.length;
+			for(var j = 0; j <= y; j++){
+				if(j != y) var grid = overlay[j];
+				if(dataTypeValue == 1){
+					if(j == y) break;
+					$("resultShape").innerHTML=$("resultShape").innerHTML+grid.lng+","+grid.lat+";";
+				}
+				else if((dataTypeValue == 2 || dataTypeValue == 3) && j == 0){
+					$("resultShape").innerHTML=$("resultShape").innerHTML+'[{"longitude"='+grid.lng+',"latitude"='+grid.lat;
+				}
+				else if((dataTypeValue == 2 || dataTypeValue == 3) && (j == y)){
+					$("resultShape").innerHTML=$("resultShape").innerHTML+'}]<br/>';
+				}
+				else if(dataTypeValue == 2 || dataTypeValue == 3){
+					$("resultShape").innerHTML=$("resultShape").innerHTML+'},{"longitude"='+grid.lng+',"latitude"='+grid.lat;
+				}
+				else{
+					if(j == y) break;
+					$("resultShape").innerHTML=$("resultShape").innerHTML+y+"个点:("+grid.lng+","+grid.lat+");<br/>";
+				}
+			}
+		}
+	}
+	
+	function draw(type){
+		drawingManager.open(); 
+		drawingManager.setDrawingMode(type);
+	}	
+		
+    function clearOverlays(){
+		setDataType();
+		var x = gpsArray.length;
+		for(var i = 0; i < x; i++){
+			map.removeOverlay(gpsArray[i]);
+		}
+		gpsArray.length = 0;
+    }
+
+	function Editing(state){
+		setDataType();
+		for(var i = 0; i < gpsArray.length; i++){
+			state=='enable'?gpsArray[i].enableEditing():gpsArray[i].disableEditing();
+		}
+	}
+	
+	var pointOverlay = [];
+    function closeDelPoint(){
+        for(var i = 0; i < pointOverlay.length; i++){  
+            map.removeOverlay(pointOverlay[i]);  
+        }
+        pointOverlay.length = 0;
+    }
+	
+	var styleOptions = {  
+        strokeColor:"red",    //边线颜色。  
+        fillColor:"",      //填充颜色。当参数为空时，将没有填充效果。  
+        strokeWeight: 3,       //边线的宽度，以像素为单位。  
+        strokeOpacity: 0.8,    //边线透明度，取值范围0 - 1。  
+        fillOpacity: 0.6,      //填充的透明度，取值范围0 - 1。  
+        strokeStyle: 'solid' //边线的样式，solid或dashed。  
+    } 
+	var cha = new BMap.Icon('cha.png', new BMap.Size(12, 12));  //自定义图片
+    //只适用于地图上一个多边形
+    function openDelPoint(i){
+		setDataType();
+		closeDelPoint();
+		var x = gpsArray.length;
+		for(var j = 0; j < x; j++){
+			var overlay = gpsArray[j].getPath();
+			var y = overlay.length;
+			for(var k = 0; k < y; k++){
+				(function (k) {
+					var grid = overlay[k];  
+					var point = new BMap.Point(grid.lng, grid.lat);
+					var marker = new BMap.Marker(point,{icon: cha}); //添加顶点marker
+					pointOverlay.push(marker); 
+					map.addOverlay(marker);
+					marker.addEventListener('click',function (){    //给添加的点绑定click事件
+						clearOverlays();//移除点
+						console.log(overlay[k]);
+						overlay.splice(k,1);
+						var poly;
+						if(dataTypeValue == 4){
+							poly = new BMap.Polyline(overlay, styleOptions);
+						}
+						else{
+							poly = new BMap.Polygon(overlay, styleOptions);  //创建多边形 
+						}
+						gpsArray.push(poly); 
+						map.addOverlay(poly);   //增加多边形  
+						openDelPoint(overlay);
+					})
+				})(k)
+			}
+		}
+    }
+	
+	function openDelPointTest(i){
+		setDataType();
+		closeDelPoint();
+		var x = gpsArray.length;
+		for(var j = 0; j < x; j++){
+			var overlay = gpsArray[j].getPath();
+			var y = overlay.length;
+			for(var k = 0; k < y; k++){
+				(function (k) {
+					var grid = overlay[k];  
+					var point = new BMap.Point(grid.lng, grid.lat);
+					var marker = new BMap.Marker(point,{icon: cha}); //添加顶点marker
+					pointOverlay.push(marker); 
+					map.addOverlay(marker);
+					marker.addEventListener("rightclick",function (){
+						var p = marker.getPosition();  //获取marker的位置
+						$("resultShape").innerHTML=$("resultShape").innerHTML + p.lng + "," + p.lat + ";";    
+					});
+					/*
+					marker.addEventListener('click',function (){    //给添加的点绑定click事件
+						console.log(overlay[k]);
+						map.removeOverlay(pointOverlay[k]);
+						overlay.splice(k,1);
+						var z = overlay.length;
+						$("resultShape").innerHTML=z+'边形:<br/>';
+						for(var l = 0; l < z; l++){
+							var gridTwo = overlay[l];
+							$("resultShape").innerHTML=$("resultShape").innerHTML+gridTwo.lng+","+gridTwo.lat+";";
+						}
+					})
+					*/
+				})(k)
+			}
+		}
+    }
+	
+	function attribute(marker){
+		var p = marker.getPosition();  //获取marker的位置
+		$("resultShape").innerHTML="marker的位置是：" + p.lng + "," + p.lat;    
+	}
+	
+	//测距
+	function distanceTool(){
+		var myDistanceToolObject = new BMapLib.DistanceTool(map);
+		myDistanceToolObject.open();
+	}
+	
+	var GShaoMB = new BMap.Polygon(dataPolygon.dataPolygon, styleOptionsBlue); //广韶大电子围栏
+	var GShaoMS = new BMap.Polygon(guangshaoMainlineSmall.GSMLS, styleOptionsRed); //广韶小电子围栏
+	var GShenMB = new BMap.Polygon(gshen.gshen, styleOptionsBlue); //广深大电子围栏
+	var GShenMS = new BMap.Polygon(gshenSmall.gshenSmall, styleOptionsRed); //广深小电子围栏
+	//主线电子围栏
+    function showPolygon(pg){
+		map.addOverlay(pg); //增加多边形    
+		overlaysMainlinePolygon.push(pg); //是否把该图像加入到编辑和删除行列    
+	}
+	
+	//主线桩位连线
+	function zhuxian(btn){
+		var mainlinePolyline = new BMap.Polyline(gshen.gshen, styleOptionsBlue); //
+		map.addOverlay(mainlinePolyline); //增加多边形    
+		overlaysMainlinePolyline.push(mainlinePolyline); //是否把该图像加入到编辑和删除行列    
+		btn.setAttribute('disabled','false');
+	}
+	
+	/*
+	function zhuxian(btn){
+		var pois = [];
+		if (document.createElement('canvas').getContext) {  // 判断当前浏览器是否支持绘制海量点
+			for (var i = 0; i < data.data.length; i++) {
+				var p = new BMap.Point(data.data[i][0], data.data[i][1]);
+				pois.push(p);
+			}
+			overlaysZhuxian.push(pois);
+			var pointCol = new BMap.PointCollection(pois, styleOptions);  // 初始化PointCollection
+			pointCol.addEventListener('click', function (e) {
+				alert('单击点的坐标为：' + e.point.lng + ',' + e.point.lat);  // 监听点击事件
+			});
+			
+			map.addOverlay(pointCol);  // 添加Overlay
+		} else {
+			alert('请在chrome、safari、IE8+以上浏览器查看本示例');
+		}
+		btn.setAttribute('disabled','false');
+	};
+	*/
+	
+	/*
+		源坐标类型：
+		1：GPS设备获取的角度坐标，WGS84坐标;
+		2：GPS获取的米制坐标、sogou地图所用坐标;
+		3：google地图、soso地图、aliyun地图、mapabc地图和amap地图所用坐标，国测局（GCJ02）坐标;
+		4：3中列表地图坐标对应的米制坐标;
+		5：百度地图采用的经纬度坐标;
+		6：百度地图采用的米制坐标;
+		7：mapbar地图坐标;
+		8：51地图坐标
+	*/
+	function convert(){
+		var gpsType = $("gpsType").value;
+		var gpsNum = 8;
+		if((gpsType.match(/google|soso|aliyun|mapabc|amap|GCJ02|gaode|高德/g)) != undefined){
+			gpsNum = 3;
+		}
+		else if((gpsType.match(/GPS|gps/g)) != undefined){
+			gpsNum = 1;
+		}
+		
+		var gpsBase = $("gpsGroup").value;
+		var gps = gpsBase.match(/[0-9]{1,3}[.][0-9]{1,}/g);
+		var gps1 = [];
+		for(var i = 0; i < gps.length; i+=2){
+			var ggPoint = new BMap.Point(gps[i],gps[i+1]);
+			gps1.push(ggPoint);
+		}
+		//坐标转换完之后的回调函数
+		translateCallback = function (data){
+			if(data.status === 0) {
+				for (var i = 0; i < data.points.length; i++) {
+					map.addOverlay(new BMap.Marker(data.points[i]));
+					map.setCenter(data.points[i]);
+				}
+			}
+		}
+
+		setTimeout(function(){
+			var convertor = new BMap.Convertor();
+			convertor.translate(gps1, gpsNum, 5, translateCallback)
+		}, 1000);
+	}
+	
+	var panoramaCoverageLayer;
+	var panorama;
+    function panorama(para) {
+		// 覆盖区域图层测试
+		panoramaCoverageLayer = new BMap.PanoramaCoverageLayer();
+		map.addTileLayer(panoramaCoverageLayer);
+
+		var stCtrl = new BMap.PanoramaControl(); //构造全景控件
+		stCtrl.setOffset(new BMap.Size(20, 20));
+		map.addControl(stCtrl);//添加全景控件
+	}
+	
+	function showPanorama(){
+		if($("jd").value != undefined && $("wd").value != undefined){
+			panorama = new BMap.Panorama('map');
+			panorama.setPov({heading: -40, pitch: 6});
+			poi = new BMap.Point($("jd").value,$("wd").value);
+			panorama.setPosition(poi); //根据经纬度坐标展示全景图
+		}
+	}
+	
+		/*
+	// 定义一个控件类,即function
+	function ZoomControl(){
+	  // 默认停靠位置和偏移量
+	  this.defaultAnchor = BMAP_ANCHOR_TOP_LEFT;
+	  this.defaultOffset = new BMap.Size(10, 10);
+	}
+
+	// 通过JavaScript的prototype属性继承于BMap.Control
+	ZoomControl.prototype = new BMap.Control();
+
+	// 自定义控件必须实现自己的initialize方法,并且将控件的DOM元素返回
+	// 在本方法中创建个div元素作为控件的容器,并将其添加到地图容器中
+	ZoomControl.prototype.initialize = function(map){
+	  // 创建一个DOM元素
+	  var div = document.createElement("div");
+	  // 添加文字说明
+	  div.appendChild(document.createTextNode("退出"));
+	  // 设置样式
+	  div.style.cursor = "pointer";
+	  div.style.border = "1px solid gray";
+	  div.style.backgroundColor = "white";
+	  // 绑定事件,点击一次放大两级
+	  div.onclick = function(e){
+		panorama.hide();
+	  }
+	  // 添加DOM元素到地图中
+	  map.getContainer().appendChild(div);
+	  // 将DOM元素返回
+	  return div;
+	}
+	// 创建控件
+	var myZoomCtrl = new ZoomControl();
+	// 添加到地图当中
+	map.addControl(myZoomCtrl);
+*/
+	
+	/*
+	function showText(){
+		var opts = {
+			position : new BMap.Point(113.941853,22.530777),    // 指定文本标注所在的地理位置
+			offset   : new BMap.Size(30, 30)    //设置文本偏移量
+		}
+		var label = new BMap.Label("不可编辑", opts);  // 创建文本标注对象
+		label.setStyle({
+			color : "black",
+			fontSize : "16px",
+			fillColor:"red",      //填充颜色。当参数为空时，圆形将没有填充效果。
+		});
+		map.addOverlay(label);  
+	}
+	*/
+</script>
+</body>
+</html>

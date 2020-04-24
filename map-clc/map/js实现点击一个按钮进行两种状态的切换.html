@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="index.css">
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            width: 100%;
+            overflow: hidden;
+        }
+        #leftMenu {
+             position: absolute;
+            height: 100%;
+            width: 200px;
+            background: rgba(0, 0, 0, 0.5);
+            transition: all 0.5s;
+            transform: translateX(-200px);
+        }
+        #leftMenu > ul {
+            list-style: none;
+        }
+        #leftMenu > ul > li {
+            margin-top: 5px;
+            height: 50px;
+            line-height: 50px;
+            background-color: pink;
+            color: #fff;
+        }
+        #main {
+            width: 100%;
+            height: 100%;
+            background: blue;
+            position: absolute;
+            transition: all 0.5s;
+        }
+
+    </style>
+</head>
+<body>
+    <section id="leftMenu">
+        <ul>
+            <li>首页</li>
+            <li>首页#</li>
+            <li>首页</li>
+        </ul>
+    </section>
+    <main id="main">
+        <input type="button" value="menu" id="btn">
+    </main>
+</body>
+<script>
+    var leftMenu = document.querySelector('#leftMenu');
+    var btn = document.querySelector('#btn');
+    var main = document.querySelector('#main');
+
+    var falg = true;
+    btn.addEventListener('click',function(){
+        if(falg){
+            leftMenu.style.transform = "translateX(0px)";
+            main.style.transform = "translateX(200px)";
+            falg=false;
+        }else{
+            leftMenu.style.transform = "translateX(-200px)";
+            main.style.transform = "translateX(0px)";
+            falg=true;
+        }
+    })
+</script>
+</html>

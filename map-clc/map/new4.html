@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=5E5EE28a7615536d1ffe2ce2a3667859"></script>
+    <title>批量转换</title>
+</head>
+<body>
+    <div id="allmap"></div>
+</body>
+</html>
+<script type="text/javascript">
+
+		var points = [new BMap.Point(113.4914906,23.09358995),
+new BMap.Point(113.4946826,23.09346137),
+new BMap.Point(113.4963805,23.09333333),
+new BMap.Point(113.4974707,23.09318142),
+new BMap.Point(113.4982227,23.0930702),
+new BMap.Point(113.4992174,23.09290744),
+new BMap.Point(113.500147,23.09276747),
+new BMap.Point(113.5011263,23.09260824),
+new BMap.Point(113.5021826,23.09247993),
+new BMap.Point(113.5034199,23.09239882),
+];
+
+
+    //地图初始化
+    var bm = new BMap.Map("allmap");
+    bm.centerAndZoom(new BMap.Point(113.567337,23.02514269), 15);
+
+    //坐标转换完之后的回调函数
+    translateCallback = function (data){
+      if(data.status === 0) {
+        for (var i = 0; i < data.points.length; i++) {
+            bm.addOverlay(new BMap.Marker(data.points[i]));
+            bm.setCenter(data.points[i]);
+        }
+      }
+    }
+    setTimeout(function(){
+        var convertor = new BMap.Convertor();
+        convertor.translate(points, 1, 5, translateCallback)
+    }, 1000);
+</script>

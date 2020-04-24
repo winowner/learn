@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <title>覆盖物群组添加/移除</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css"/>
+    <style>
+        html, body, #container {
+            height: 100%;
+            width: 100%;
+        }
+
+        #addOverlayGroup {
+            margin-right: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div class="input-card">
+    <h4>覆盖物群组添加/移除</h4>
+    <div class="input-item">
+        <input id="addOverlayGroup" type="button" class="btn" value="添加覆盖物群组"/>
+        <input id="removeOverlayGroup" type="button" class="btn" value="移除覆盖物群组"/>
+    </div>
+</div>
+<script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=1.4.14&key=2407d029be7a00660d1ab0ad8946eb70"></script>
+<script type="text/javascript">
+    // 创建地图实例
+    var map = new AMap.Map("container", {
+        zoom: 13,
+        center: [116.43, 39.92],
+        resizeEnable: true
+    });
+
+    var lnglats = [[116.39, 39.92], [116.41, 39.93], [116.43, 39.91], [116.46, 39.93]];
+    var markers = [];
+
+    for (var i = 0; i < lnglats.length; i++) {
+        var lnglat = lnglats[i];
+        // 创建点实例
+        var marker = new AMap.Marker({
+            position: new AMap.LngLat(lnglat[0], lnglat[1]),
+            icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b' + (i + 1) + '.png',
+            extData: {
+                id: i + 1
+            }
+        });
+
+        markers.push(marker);
+    }
+
+    // 创建覆盖物群组，并将 marker 传给 OverlayGroup
+    var overlayGroups = new AMap.OverlayGroup(markers);
+
+    // 添加覆盖物群组
+    function addOverlayGroup() {
+
+        map.add(overlayGroups);
+    }
+
+    // 移除覆盖物群组
+    function removeOverlayGroup() {
+
+        map.remove(overlayGroups);
+    }
+
+    // 绑定事件
+    document.getElementById("addOverlayGroup").onclick = addOverlayGroup;
+    document.getElementById("removeOverlayGroup").onclick = removeOverlayGroup;
+</script>
+</body>
+</html>
