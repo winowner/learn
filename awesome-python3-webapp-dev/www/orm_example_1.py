@@ -22,7 +22,7 @@ t_user = db.Table('user_basic',
                   # 注意: 如果有外键, 定义方式和普通字段一样, 可以添加索引提高性能
                   # db.Column('leader_id', BIGINT(10, unsigned=True), default=0, comment='上级的id', index=True),
                   mysql_engine='MyISAM',
-                  mysql_charset='utf8mb4')
+                  mysql_charset='utf8')
 
 
 if __name__ == '__main__':
