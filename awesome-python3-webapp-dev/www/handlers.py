@@ -76,7 +76,7 @@ async def cookie2user(cookie_str):
 
 @get('/')
 async def index(*, page='1'):
-    page_index = get_page_index(page)
+    # page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
     page = Page(num)
     if num == 0:

@@ -7,7 +7,6 @@ def create_app(): #在其他地方封装的
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@127.0.0.1:3306/clc?charset=utf8'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
     return app
 
 app = create_app()
@@ -29,7 +28,7 @@ class User(model_db.Model):  # db.Model主要用于数据的增删改查, 构建
 @app.route('/')
 def index():
     user1 = User()
-    user1.mobile = '18912341234'
+    user1.mobile = '1891111111'
     model_db.session.add(user1)
     model_db.session.commit()
     return 'index'
