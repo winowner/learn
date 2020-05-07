@@ -406,7 +406,7 @@
 	
 	//主线桩位连线
 	function zhuxian(btn){
-		var mainlinePolyline = new BMap.Polyline(gshen.gshen, styleOptionsBlue); //
+		var mainlinePolyline = new BMap.Polyline(gshen.gshen, styleOptionsBlue);
 		map.addOverlay(mainlinePolyline); //增加多边形    
 		overlaysMainlinePolyline.push(mainlinePolyline); //是否把该图像加入到编辑和删除行列    
 		btn.setAttribute('disabled','false');
